@@ -99,9 +99,9 @@ void DiscretizeScan(
     }
 }
 
-/* Evaluate the matching score based on the discretized scan points */
-void EvaluateScore(
-    const MapValue coarseGridMap[MAP_Y][MAP_X],
+/* Compute the matching score based on the discretized scan points */
+void ComputeScoreOnMapNaive(
+    const MapValue gridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
@@ -126,7 +126,7 @@ void EvaluateScore(
             continue;
 
         /* Retrieve the occupancy probability value */
-        const MapValue mapValue = coarseGridMap[hitIdxY][hitIdxX];
+        const MapValue mapValue = gridMap[hitIdxY][hitIdxX];
 
         /* Only the grid cells which are observed at least once and
          * have known occupancy probability values are considered in the
@@ -142,8 +142,8 @@ void EvaluateScore(
 }
 
 /* Evaluate the matching score using the high-resolution grid map */
-void EvaluateOnGridMapNaive(
-    const MapValue coarseGridMap[MAP_Y][MAP_X],
+void EvaluateOnMapNaive(
+    const MapValue gridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
@@ -158,9 +158,10 @@ void EvaluateOnGridMapNaive(
             const int offsetY = baseOffsetY + y;
             int sumScore = 0;
             int numOfKnownGridCells = 0;
-            EvaluateScore(coarseGridMap, mapSizeX, mapSizeY,
-                          numOfScans, scanPoints, offsetX, offsetY,
-                          sumScore, numOfKnownGridCells);
+            ComputeScoreOnMapNaive(
+                gridMap, mapSizeX, mapSizeY,
+                numOfScans, scanPoints, offsetX, offsetY,
+                sumScore, numOfKnownGridCells);
 
             /* Update the maximum score and the grid cell index inside
              * the search window */
@@ -245,7 +246,7 @@ void GetMapValuesParallelX(
 }
 
 /* Evaluate the matching score based on the discretized scan points */
-void EvaluateScoreParallelX(
+void ComputeScoreOnMapParallelX(
     const MapValue gridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int numOfScans,
@@ -307,7 +308,7 @@ void EvaluateScoreParallelX(
 }
 
 /* Evaluate the matching score using the high-resolution grid map */
-void EvaluateOnGridMapParallelX(
+void EvaluateOnMapParallelX(
     const MapValue gridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int numOfScans,
@@ -324,7 +325,7 @@ void EvaluateOnGridMapParallelX(
         const int offsetY = baseOffsetY + y;
         int sumScore = 0;
         int numOfKnownGridCells = 0;
-        EvaluateScoreParallelX(
+        ComputeScoreOnMapParallelX(
             gridMap, mapSizeX, mapSizeY,
             numOfScans, scanPoints, baseOffsetX, offsetY,
             sumScore, numOfKnownGridCells, offsetX);
@@ -432,7 +433,7 @@ void GetCoarseMapValuesParallelX(
 }
 
 /* Evaluate the matching score based on the discretized scan points */
-void EvaluateOnCoarseMapParallelX(
+void ComputeScoreOnCoarseMapParallelX(
     const MapValue coarseGridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int numOfScans,
@@ -544,7 +545,7 @@ void OptimizePose(
                 int numOfKnownCells[MAP_CHUNK];
 #pragma HLS ARRAY_PARTITION variable=numOfKnownCells complete dim=1
 
-                EvaluateOnCoarseMapParallelX(
+                ComputeScoreOnCoarseMapParallelX(
                     coarseGridMap, mapSizeX, mapSizeY,
                     numOfScans, scanPoints, x, y,
                     sumScores, numOfKnownCells);
@@ -560,7 +561,7 @@ void OptimizePose(
                     /* Evaluate the score using the high-resolution grid map,
                      * Update the maximum score and the grid cell index inside
                      * the search window */
-                    EvaluateOnGridMapParallelX(
+                    EvaluateOnMapParallelX(
                         gridMap, mapSizeX, mapSizeY,
                         numOfScans, scanPoints, x + (i << 3), y, t,
                         scoreMax, bestX, bestY, bestTheta);
