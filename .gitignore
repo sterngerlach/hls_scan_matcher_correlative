@@ -1,0 +1,14 @@
+
+# .gitignore
+
+# Unnecessary files and directories
+.apc/
+.reference/
+.settings/
+local-map-images/
+
+.cproject
+.project
+.vivado_hls_log_all.xml
+vivado_hls.app
+
