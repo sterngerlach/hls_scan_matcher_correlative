@@ -5,24 +5,6 @@
 #include "grid_map.h"
 #include "reduce.h"
 
-/* Convert a single-precision floating-point number to
- * a 32-bit unsigned integer (bit representation is kept) */
-inline unsigned int FloatToUInt32(const float value)
-{
-    UInt32OrFloat dataConv;
-    dataConv.mFloatValue = value;
-    return dataConv.mUInt32Value;
-}
-
-/* Convert a 32-bit unsigned integer to a single-precision
- * floating-point number (bit representation is kept) */
-inline float UInt32ToFloat(const unsigned int value)
-{
-    UInt32OrFloat dataConv;
-    dataConv.mUInt32Value = value;
-    return dataConv.mFloatValue;
-}
-
 /* Discretize the scan points */
 void DiscretizeScan(
     const RobotPose2D& mapLocalPose,
