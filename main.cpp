@@ -257,12 +257,11 @@ void EvaluateOnMapParallelX(
     for (int y = 0; y < MAP_CHUNK; ++y) {
         /* Evaluate the score using the high-resolution grid map */
         int offsetX;
-        const int offsetY = baseOffsetY + y;
         int sumScore = 0;
         int numOfKnownGridCells = 0;
         ComputeScoreOnMapParallelX(
             gridMap, mapSizeX, mapSizeY,
-            numOfScans, scanPoints, baseOffsetX, offsetY,
+            numOfScans, scanPoints, baseOffsetX, baseOffsetY + y,
             sumScore, numOfKnownGridCells, offsetX);
 
         /* Update the maximum score and the grid cell index inside
@@ -270,7 +269,7 @@ void EvaluateOnMapParallelX(
         if (scoreMax < sumScore) {
             scoreMax = sumScore;
             bestX = offsetX;
-            bestY = offsetY;
+            bestY = baseOffsetY + y;
             bestTheta = offsetTheta;
         }
     }
