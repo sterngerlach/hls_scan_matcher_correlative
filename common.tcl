@@ -5,6 +5,10 @@ open_project -reset scan_matcher_correlative
 set_top ScanMatchCorrelative
 
 add_files scan_matcher_correlative/main.cpp
+# add_files scan_matcher_correlative/main_naive.cpp
+# add_files scan_matcher_correlative/main_parallelx.cpp
+# add_files scan_matcher_correlative/main_parallelx2.cpp
+# add_files scan_matcher_correlative/main_parallelxy.cpp
 add_files scan_matcher_correlative/main.h
 add_files scan_matcher_correlative/reduce.cpp
 add_files scan_matcher_correlative/reduce.h
