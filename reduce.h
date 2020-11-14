@@ -4,7 +4,7 @@
 #ifndef SCAN_MATCHER_REDUCE_H
 #define SCAN_MATCHER_REDUCE_H
 
-#include "main.h"
+#include <ap_int.h>
 
 /* Get the maximum values from the window with 8 consecutive elements */
 ap_uint<8> MaxValue8(const ap_uint<64> window);
