@@ -342,6 +342,74 @@ void GetMapValuesParallelXY(
         mapValues[y] = mapChunks0[y + offsetY];
 }
 
+/* Compute the matching score based on the discretized scan points */
+void ComputeScoreOnMapParallelXY(
+    const MapValue gridMap[MAP_Y][MAP_X],
+    const int mapSizeX, const int mapSizeY,
+    const int numOfScans,
+    const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
+    const int baseOffsetX, const int offsetY,
+    int& bestSumScore, int& bestNumOfCells, int& bestX, int& bestY)
+{
+#pragma HLS INLINE off
+
+    /* Parallelize the score computation along the X-axis and Y-axis */
+    /* Parallelization degree for X-axis is 8 and for Y-axis is 4 */
+    int sumScores[MAP_CHUNK * MAP_CHUNK / 2];
+#pragma HLS ARRAY_PARTITION variable=sumScores cyclic factor=8 dim=1
+    int numOfKnownCells[MAP_CHUNK * MAP_CHUNK / 2];
+#pragma HLS ARRAY_PARTITION variable=numOfKnownCells cyclic factor=8 dim=1
+    MapChunk mapValues[MAP_CHUNK / 2];
+#pragma HLS ARRAY_PARTITION variable=mapValues complete dim=1
+
+    /* Add the occupancy probability value to the matching score */
+    for (int i = 0; i < numOfScans; ++i) {
+#pragma HLS LOOP_TRIPCOUNT min=180 max=512 avg=360
+#pragma HLS LOOP_FLATTEN off
+#pragma HLS PIPELINE II=2
+        /* Compute the grid cell index */
+        const Point2D<int> scanPoint = scanPoints[i];
+        const int hitIdxX = scanPoint.mX + baseOffsetX;
+        const int hitIdxY = scanPoint.mY + offsetY;
+
+        /* Retrieve the occupancy probability values */
+        GetMapValuesParallelXY(gridMap, mapSizeX, mapSizeY,
+                               hitIdxX, hitIdxY, mapValues);
+
+        /* Parallelize the score computation */
+        for (int j = 0; j < MAP_CHUNK * MAP_CHUNK / 2; ++j) {
+            /* Split the grid map value from the chunk */
+            const int offsetX = j % 8;
+            const int offsetY = j / 8;
+            const MapValue mapValue =
+                mapValues[offsetY]((offsetX << 3) + 7, offsetX << 3);
+
+            /* Only the grid cells which are observed at least once and
+             * have known occupancy probability values are considered in the
+             * score computation */
+            const int isValid = mapValue.is_zero() ? 0 : 1;
+
+            /* Append the occupancy probability to the matching score */
+            sumScores[j] = (i == 0) ? static_cast<int>(mapValue) :
+                           static_cast<int>(sumScores[j] + mapValue);
+
+            /* Count the number of the known (valid) grid cells */
+            numOfKnownCells[j] = (i == 0) ? isValid :
+                                 numOfKnownCells[j] + isValid;
+        }
+    }
+
+    /* Choose the maximum score and its corresponding number of the known
+     * grid cells with valid occupancy probability values */
+    const int bestIdx = IndexOfMaxValue32(sumScores);
+
+    /* Return the result */
+    bestSumScore = sumScores[bestIdx];
+    bestNumOfCells = numOfKnownCells[bestIdx];
+    bestX = baseOffsetX + (bestIdx % 8);
+    bestY = offsetY + (bestIdx / 8);
+}
+
 /* Retrieve the occupancy probability values */
 void GetCoarseMapValuesParallelX(
     const MapValue coarseGridMap[MAP_Y][MAP_X],
