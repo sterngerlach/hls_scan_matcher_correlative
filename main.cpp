@@ -280,7 +280,7 @@ void GetCoarseMapValuesParallelX(
     const MapValue coarseGridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int idxX, const int idxY,
-    MapValue mapValues[NUM_OF_CHUNKS])
+    MapValue mapValues[MAP_CHUNK])
 {
     const MapValue Zero = static_cast<MapValue>(0);
 
