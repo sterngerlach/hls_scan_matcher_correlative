@@ -850,6 +850,19 @@ void ScanMatchCorrelative(
 #pragma HLS INTERFACE s_axilite port=stepTheta
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
+    /* Reduce LUTs for conversions from a single-precision
+     * floating number to a fixed-point number */
+#pragma HLS ALLOCATION instances=fpext limit=1 operation
+#pragma HLS ALLOCATION instances=ashr limit=1 operation
+#pragma HLS ALLOCATION instances=shl limit=1 operation
+#pragma HLS ALLOCATION instances=select limit=8 operation
+#pragma HLS ALLOCATION instances=icmp limit=8 operation
+#pragma HLS ALLOCATION instances=or limit=8 operation
+#pragma HLS ALLOCATION instances=xor limit=8 operation
+#pragma HLS ALLOCATION instances=and limit=8 operation
+#pragma HLS ALLOCATION instances=add limit=8 operation
+#pragma HLS ALLOCATION instances=sub limit=8 operation
+
     /* Only grid cells that reside within the range from (0, 0) to
      * (`mapSizeX` - 1, `mapSizeY` - 1) are valid */
 
