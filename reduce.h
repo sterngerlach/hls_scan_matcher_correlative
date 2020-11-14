@@ -9,7 +9,7 @@
 /* Get the maximum values from the window with 8 consecutive elements */
 ap_uint<8> MaxValue8(const ap_uint<64> window);
 
-/* Get the index of the maximum value from the 8 elements */
+/* Get the index of the maximum value from the array with 8 elements */
 int IndexOfMaxValue8(const int values[8]);
 
 /* Get the sum of the 16 values */

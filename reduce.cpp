@@ -3,7 +3,7 @@
 
 #include "reduce.h"
 
-/* Get the index of the maximum value from the 8 elements */
+/* Get the index of the maximum value from the array with 8 elements */
 int IndexOfMaxValue8(const int values[8])
 {
     int idx0 = values[0] > values[4] ? 0 : 4;
