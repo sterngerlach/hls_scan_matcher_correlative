@@ -275,6 +275,73 @@ void EvaluateOnMapParallelX(
     }
 }
 
+/* Retrieve the occupancy probability values from the grid map */
+void GetMapValuesParallelXY(
+    const MapValue gridMap[MAP_Y][MAP_X],
+    const int mapSizeX, const int mapSizeY,
+    const int idxX, const int idxY,
+    MapChunk mapValues[MAP_CHUNK / 2])
+{
+    const MapValue Zero = static_cast<MapValue>(0);
+
+    const int offsetX = idxX & 0x7;
+    const int beginX = idxX & ~0x7;
+    const int offsetY = idxY & 0x3;
+    const int beginY = idxY & ~0x3;
+
+    /* Store the intermediate 8 elements to the chunks */
+    MapChunk mapChunks0[MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=mapChunks0 complete dim=1
+    MapChunk mapChunks1[MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=mapChunks1 complete dim=1
+
+    /* We access 128 ((8 + 8) * (4 + 4)) elements to retrieve 32 elements */
+    /* Access the left-hand side 64 (32 + 32) elements at the same time
+     * (beginX, beginY), ..., (beginX + 7, beginY + 3) and
+     * (beginX, beginY + 4), ..., (beginX + 7, beginY + 7) */
+    const int baseX = beginX / 8;
+    const int baseY = beginY / 4;
+
+    for (int y = 0; y < MAP_CHUNK; ++y) {
+#pragma HLS UNROLL skip_exit_check factor=4
+        for (int x = 0; x < MAP_CHUNK; ++x) {
+#pragma HLS UNROLL
+            mapChunks0[y]((x * 8) + 7, x * 8) =
+                ((baseX * 8 + x < mapSizeX) && (baseY * 4 + y < mapSizeY)) ?
+                gridMap[baseY * 4 + y][baseX * 8 + x] : Zero;
+        }
+    }
+
+    /* Access the right-hand side 64 (32 + 32) elements at the same time
+     * (beginX + 8, beginY), ..., (beginX + 15, beginY + 3) and
+     * (beginX + 8, beginY + 4), ..., (beginX + 15, beginY + 7) */
+    const int nextX = baseX + 1;
+
+    for (int y = 0; y < MAP_CHUNK; ++y) {
+#pragma HLS UNROLL skip_exit_check factor=4
+        for (int x = 0; x < MAP_CHUNK; ++x) {
+#pragma HLS UNROLL
+            mapChunks1[y]((x * 8) + 7, x * 8) =
+                ((nextX * 8 + x < mapSizeX) && (baseY * 4 + y < mapSizeY)) ?
+                gridMap[baseY * 4 + y][nextX * 8 + x] : Zero;
+        }
+    }
+
+    /* Get the 32 elements (idxX, idxY), ..., (idxX + 7, idxY + 4)
+     * using the above chunks `mapChunks0` and `mapChunks1` */
+    for (int y = 0; y < MAP_CHUNK; ++y) {
+#pragma HLS UNROLL
+        mapChunks0[y] >>= (offsetX * 8);
+        mapChunks1[y] <<= (64 - offsetX * 8);
+        mapChunks0[y] = mapChunks0[y] | mapChunks1[y];
+    }
+
+    /* Store the final elements */
+    for (int y = 0; y < MAP_CHUNK / 2; ++y)
+#pragma HLS UNROLL
+        mapValues[y] = mapChunks0[y + offsetY];
+}
+
 /* Retrieve the occupancy probability values */
 void GetCoarseMapValuesParallelX(
     const MapValue coarseGridMap[MAP_Y][MAP_X],
