@@ -663,7 +663,7 @@ void OptimizePose(
                     /* Evaluate the score using the high-resolution grid map,
                      * Update the maximum score and the grid cell index inside
                      * the search window */
-                    EvaluateOnMapParallelX(
+                    EvaluateOnMapParallelXY(
                         gridMap, mapSizeX, mapSizeY,
                         numOfScans, scanPoints, x + (i << 3), y, t,
                         scoreMax, bestX, bestY, bestTheta);
@@ -872,6 +872,7 @@ void ScanMatchCorrelative(
 
     /* Grid map and the coarse grid map */
     MapValue gridMap[MAP_Y][MAP_X];
+#pragma HLS ARRAY_PARTITION variable=gridMap cyclic factor=4 dim=1
 #pragma HLS ARRAY_PARTITION variable=gridMap cyclic factor=8 dim=2
 
     /* coarseGridMap[y]: (y, 0), (y, 8), ..., (y, 312),
