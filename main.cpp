@@ -410,6 +410,39 @@ void ComputeScoreOnMapParallelXY(
     bestY = offsetY + (bestIdx / 8);
 }
 
+/* Evaluate the matching score using the high-resolution grid map */
+void EvaluateOnMapParallelXY(
+    const MapValue gridMap[MAP_Y][MAP_X],
+    const int mapSizeX, const int mapSizeY,
+    const int numOfScans,
+    const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
+    const int baseOffsetX, const int baseOffsetY, const int offsetTheta,
+    int& scoreMax, int& bestX, int& bestY, int& bestTheta)
+{
+#pragma HLS INLINE off
+
+    /* Evaluate the solution in [baseOffsetX, baseOffsetX + MAP_CHUNK),
+     * [baseOffsetY, baseOffsetY + MAP_CHUNK) */
+    for (int y = 0; y < MAP_CHUNK; y += 4) {
+        int offsetX = 0;
+        int offsetY = 0;
+        int sumScore = 0;
+        int numOfKnownGridCells = 0;
+        ComputeScoreOnMapParallelXY(
+            gridMap, mapSizeX, mapSizeY,
+            numOfScans, scanPoints, baseOffsetX, baseOffsetY + y,
+            sumScore, numOfKnownGridCells, offsetX, offsetY);
+
+        /* Update the maximum score and the solution */
+        if (scoreMax < sumScore) {
+            scoreMax = sumScore;
+            bestX = offsetX;
+            bestY = offsetY;
+            bestTheta = offsetTheta;
+        }
+    }
+}
+
 /* Retrieve the occupancy probability values */
 void GetCoarseMapValuesParallelX(
     const MapValue coarseGridMap[MAP_Y][MAP_X],
