@@ -27,6 +27,44 @@ int IndexOfMaxValue8(const int values[8])
     return idx0;
 }
 
+/* Get the index of the maximum value from the array with 32 elements */
+int IndexOfMaxValue32(const int values[32])
+{
+    int idxMax = 0;
+    int valueMax = 0;
+
+    for (int i = 0; i < 4; ++i) {
+        int idx0 = values[(i << 3) + 0] > values[(i << 3) + 4] ? 0 : 4;
+        int idx1 = values[(i << 3) + 1] > values[(i << 3) + 5] ? 1 : 5;
+        int idx2 = values[(i << 3) + 2] > values[(i << 3) + 6] ? 2 : 6;
+        int idx3 = values[(i << 3) + 3] > values[(i << 3) + 7] ? 3 : 7;
+
+        int value0 = values[(i << 3) + 0] > values[(i << 3) + 4] ?
+                     values[(i << 3) + 0] : values[(i << 3) + 4];
+        int value1 = values[(i << 3) + 1] > values[(i << 3) + 5] ?
+                     values[(i << 3) + 1] : values[(i << 3) + 5];
+        int value2 = values[(i << 3) + 2] > values[(i << 3) + 6] ?
+                     values[(i << 3) + 2] : values[(i << 3) + 6];
+        int value3 = values[(i << 3) + 3] > values[(i << 3) + 7] ?
+                     values[(i << 3) + 3] : values[(i << 3) + 7];
+
+        idx0 = value0 > value2 ? idx0 : idx2;
+        idx1 = value1 > value3 ? idx1 : idx3;
+        value0 = value0 > value2 ? value0 : value2;
+        value1 = value1 > value3 ? value1 : value3;
+
+        idx0 = value0 > value1 ? idx0 : idx1;
+        value0 = value0 > value1 ? value0 : value1;
+
+        idx0 += (i << 3);
+
+        idxMax = value0 > valueMax ? idx0 : idxMax;
+        valueMax = value0 > valueMax ? value0 : valueMax;
+    }
+
+    return idxMax;
+}
+
 /* Get the maximum values from the window with 8 consecutive elements */
 ap_uint<8> MaxValue8(const ap_uint<64> window)
 {

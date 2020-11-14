@@ -12,6 +12,9 @@ ap_uint<8> MaxValue8(const ap_uint<64> window);
 /* Get the index of the maximum value from the array with 8 elements */
 int IndexOfMaxValue8(const int values[8]);
 
+/* Get the index of the maximum value from the array with 32 elements */
+int IndexOfMaxValue32(const int values[32]);
+
 /* Get the sum of the 16 values */
 template <typename T>
 T SumValue16(const T values[16])
