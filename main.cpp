@@ -910,13 +910,19 @@ void SetupGridMap(
                 /* Get the maximum value from the vertical window */
                 const MapValue maxValue = MaxValue8(verticalWindow);
 
-                /* Write to the coarse grid map */
+                /* Compute the corresponding index */
                 const int posX = (x << 3) + i;
                 const int posY = y - (MAP_CHUNK - 1);
+
                 const int offsetX = posX % MAP_CHUNK;
                 const int baseX = posX / MAP_CHUNK;
                 const int mapX = offsetX * NUM_OF_CHUNKS + baseX;
-                coarseGridMap[posY][mapX] = maxValue;
+                const int offsetY = posY % MAP_CHUNK_2;
+                const int baseY = posY / MAP_CHUNK_2;
+                const int mapY = offsetY * NUM_OF_2_CHUNKS + baseY;
+
+                /* Write to the coarse grid map */
+                coarseGridMap[mapY][mapX] = maxValue;
 
                 /* Cache the last row */
                 lastRowCache[posX] = maxValue;
@@ -934,7 +940,10 @@ void SetupGridMap(
             const int offsetX = x % MAP_CHUNK;
             const int baseX = x / MAP_CHUNK;
             const int mapX = offsetX * NUM_OF_CHUNKS + baseX;
-            coarseGridMap[posY][mapX] = lastRowCache[x];
+            const int offsetY = posY % MAP_CHUNK_2;
+            const int baseY = posY / MAP_CHUNK_2;
+            const int mapY = offsetY * NUM_OF_2_CHUNKS + baseY;
+            coarseGridMap[mapY][mapX] = lastRowCache[x];
         }
     }
 }
