@@ -31,8 +31,10 @@
 
 /* The size of the grid map chunk */
 #define MAP_CHUNK                   8
+#define MAP_CHUNK_2                 4
 /* The number of the grid map chunks */
 #define NUM_OF_CHUNKS               40
+#define NUM_OF_2_CHUNKS             80
 
 /* Type definition for grid cell value (discretized occupancy probability) */
 typedef ap_uint<8>       MapValue;
