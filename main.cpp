@@ -584,6 +584,71 @@ void ComputeScoreOnCoarseMapParallelX(
     }
 }
 
+/* Retrieve the occupancy probability values in the coarse grid map */
+void GetCoarseMapValuesParallelXY(
+    const MapValue coarseGridMap[MAP_Y][MAP_X],
+    const int mapSizeX, const int mapSizeY,
+    const int idxX, const int idxY,
+    MapChunk mapValues[MAP_CHUNK_2])
+{
+    const MapValue Zero = static_cast<MapValue>(0);
+
+    const int offsetX = idxX % 8;
+    const int maxX = (offsetX + 1) * 40;
+    const int offsetY = idxY % 4;
+    const int maxY = (offsetY + 1) * 80;
+
+    /* Store the intermediate 8 elements to `mapChunk` */
+    MapChunk mapChunks0[MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=mapChunks0 complete dim=1
+    MapChunk mapChunks1[MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=mapChunks1 complete dim=1
+
+    /* We access 128 ((8 + 8) * (4 + 4)) elements to retrieve 32 elements */
+    /* Access the left-hand side 64 (32 + 32) elements at the same time */
+    const int baseX = (idxX >> 6) + offsetX * 5;
+    const int baseY = (idxY >> 4) + offsetY * 20;
+
+    for (int y = 0; y < MAP_CHUNK; ++y) {
+#pragma HLS UNROLL skip_exit_check factor=4
+        for (int x = 0; x < MAP_CHUNK; ++x) {
+#pragma HLS UNROLL
+            mapChunks0[y]((x * 8) + 7, x * 8) =
+                ((baseY * 4 + y < maxY) && (baseX * 8 + x < maxX)) ?
+                coarseGridMap[baseY * 4 + y][baseX * 8 + x] : Zero;
+        }
+    }
+
+    /* Access the right-hand side 64 (32 + 32) elements at the same time */
+    const int nextX = baseX + 1;
+
+    for (int y = 0; y < MAP_CHUNK; ++y) {
+#pragma HLS UNROLL skip_exit_check factor=4
+        for (int x = 0; x < MAP_CHUNK; ++x) {
+#pragma HLS UNROLL
+            mapChunks1[y]((x * 8) + 7, x * 8) =
+                ((baseY * 4 + y < maxY) && (nextX * 8 + x < maxX)) ?
+                coarseGridMap[baseY * 4 + y][nextX * 8 + x] : Zero;
+        }
+    }
+
+    /* Get the 32 elements that are actually used */
+    const int shiftX = (idxX >> 3) % 8;
+    const int shiftY = (idxY >> 2) % 4;
+
+    for (int y = 0; y < MAP_CHUNK; ++y) {
+#pragma HLS UNROLL
+        mapChunks0[y] >>= (shiftX * 8);
+        mapChunks1[y] <<= (64 - shiftX * 8);
+        mapChunks0[y] = mapChunks0[y] | mapChunks1[y];
+    }
+
+    /* Store the 32 elements */
+    for (int y = 0; y < MAP_CHUNK_2; ++y)
+#pragma HLS UNROLL
+        mapValues[y] = mapChunks0[y + shiftY];
+}
+
 /* Optimize the sensor pose by real-time correlative scan matching */
 void OptimizePose(
     const RobotPose2D& mapLocalPose,
