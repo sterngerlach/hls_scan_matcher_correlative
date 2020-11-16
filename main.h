@@ -116,8 +116,7 @@ inline std::ostream& operator<<(
 void ScanMatchCorrelative(
     hls::stream<AxiStreamData>& inStream,
     hls::stream<AxiStreamData>& outStream,
-    const int numOfScans, const float scanRangeMax,
-    const int scoreThreshold, const int knownGridCellsThreshold,
+    const int numOfScans, const float scanRangeMax, const int scoreThreshold,
     const float poseX, const float poseY, const float poseTheta,
     const int mapSizeX, const int mapSizeY,
     const float mapMinX, const float mapMinY,

@@ -41,7 +41,7 @@ void ComputeScoreOnMapNaive(
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
     const int offsetX, const int offsetY,
-    int& sumScore, int& numOfKnownGridCells)
+    int& sumScore)
 {
 #pragma HLS INLINE off
 
@@ -71,8 +71,6 @@ void ComputeScoreOnMapNaive(
 
         /* Append the occupancy probability to the matching score */
         sumScore += static_cast<int>(mapValue);
-        /* Count the number of the known (valid) grid cells */
-        ++numOfKnownGridCells;
     }
 }
 
@@ -92,11 +90,10 @@ void EvaluateOnMapNaive(
             const int offsetX = baseOffsetX + x;
             const int offsetY = baseOffsetY + y;
             int sumScore = 0;
-            int numOfKnownGridCells = 0;
             ComputeScoreOnMapNaive(
                 gridMap, mapSizeX, mapSizeY,
                 numOfScans, scanPoints, offsetX, offsetY,
-                sumScore, numOfKnownGridCells);
+                sumScore);
 
             /* Update the maximum score and the grid cell index inside
              * the search window */
@@ -187,15 +184,13 @@ void ComputeScoreOnMapParallelX(
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
     const int baseOffsetX, const int offsetY,
-    int& bestSumScore, int& bestNumOfCells, int& bestX)
+    int& bestSumScore, int& bestX)
 {
 #pragma HLS INLINE off
 
     /* Parallelize the score computation along the X-axis */
     int sumScores[MAP_CHUNK];
 #pragma HLS ARRAY_PARTITION variable=sumScores complete dim=1
-    int numOfKnownCells[MAP_CHUNK];
-#pragma HLS ARRAY_PARTITION variable=numOfKnownCells complete dim=1
     MapValue mapValues[MAP_CHUNK];
 #pragma HLS ARRAY_PARTITION variable=mapValues complete dim=1
 
@@ -221,14 +216,9 @@ void ComputeScoreOnMapParallelX(
             /* Only the grid cells which are observed at least once and
              * have known occupancy probability values are considered in the
              * score computation */
-            const int isValid = mapValues[j].is_zero() ? 0 : 1;
-
             /* Append the occupancy probability to the matching score */
             sumScores[j] = (i == 0) ? static_cast<int>(mapValues[j]) :
                            static_cast<int>(sumScores[j] + mapValues[j]);
-            /* Count the number of the known (valid) grid cells */
-            numOfKnownCells[j] = (i == 0) ? isValid :
-                                 numOfKnownCells[j] + isValid;
         }
     }
 
@@ -238,7 +228,6 @@ void ComputeScoreOnMapParallelX(
 
     /* Return the result */
     bestSumScore = sumScores[bestIdx];
-    bestNumOfCells = numOfKnownCells[bestIdx];
     bestX = baseOffsetX + bestIdx;
 }
 
@@ -258,11 +247,10 @@ void EvaluateOnMapParallelX(
         /* Evaluate the score using the high-resolution grid map */
         int offsetX;
         int sumScore = 0;
-        int numOfKnownGridCells = 0;
         ComputeScoreOnMapParallelX(
             gridMap, mapSizeX, mapSizeY,
             numOfScans, scanPoints, baseOffsetX, baseOffsetY + y,
-            sumScore, numOfKnownGridCells, offsetX);
+            sumScore, offsetX);
 
         /* Update the maximum score and the grid cell index inside
          * the search window */
@@ -349,7 +337,7 @@ void ComputeScoreOnMapParallelXY(
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
     const int baseOffsetX, const int offsetY,
-    int& bestSumScore, int& bestNumOfCells, int& bestX, int& bestY)
+    int& bestSumScore, int& bestX, int& bestY)
 {
 #pragma HLS INLINE off
 
@@ -357,8 +345,6 @@ void ComputeScoreOnMapParallelXY(
     /* Parallelization degree for X-axis is 8 and for Y-axis is 4 */
     int sumScores[MAP_CHUNK * MAP_CHUNK / 2];
 #pragma HLS ARRAY_PARTITION variable=sumScores cyclic factor=8 dim=1
-    int numOfKnownCells[MAP_CHUNK * MAP_CHUNK / 2];
-#pragma HLS ARRAY_PARTITION variable=numOfKnownCells cyclic factor=8 dim=1
     MapChunk mapValues[MAP_CHUNK / 2];
 #pragma HLS ARRAY_PARTITION variable=mapValues complete dim=1
 
@@ -387,15 +373,9 @@ void ComputeScoreOnMapParallelXY(
             /* Only the grid cells which are observed at least once and
              * have known occupancy probability values are considered in the
              * score computation */
-            const int isValid = mapValue.is_zero() ? 0 : 1;
-
             /* Append the occupancy probability to the matching score */
             sumScores[j] = (i == 0) ? static_cast<int>(mapValue) :
                            static_cast<int>(sumScores[j] + mapValue);
-
-            /* Count the number of the known (valid) grid cells */
-            numOfKnownCells[j] = (i == 0) ? isValid :
-                                 numOfKnownCells[j] + isValid;
         }
     }
 
@@ -405,7 +385,6 @@ void ComputeScoreOnMapParallelXY(
 
     /* Return the result */
     bestSumScore = sumScores[bestIdx];
-    bestNumOfCells = numOfKnownCells[bestIdx];
     bestX = baseOffsetX + (bestIdx % 8);
     bestY = offsetY + (bestIdx / 8);
 }
@@ -427,11 +406,10 @@ void EvaluateOnMapParallelXY(
         int offsetX = 0;
         int offsetY = 0;
         int sumScore = 0;
-        int numOfKnownGridCells = 0;
         ComputeScoreOnMapParallelXY(
             gridMap, mapSizeX, mapSizeY,
             numOfScans, scanPoints, baseOffsetX, baseOffsetY + y,
-            sumScore, numOfKnownGridCells, offsetX, offsetY);
+            sumScore, offsetX, offsetY);
 
         /* Update the maximum score and the solution */
         if (scoreMax < sumScore) {
@@ -541,7 +519,7 @@ void ComputeScoreOnCoarseMapParallelX(
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
     const int baseOffsetX, const int offsetY,
-    int sumScores[MAP_CHUNK], int numOfKnownCells[MAP_CHUNK])
+    int sumScores[MAP_CHUNK])
 {
 #pragma HLS INLINE off
 
@@ -572,14 +550,9 @@ void ComputeScoreOnCoarseMapParallelX(
             /* Only the grid cells which are observed at least once and
              * have known occupancy probability values are considered in the
              * score computation */
-            const int isValid = mapValues[j].is_zero() ? 0 : 1;
-
             /* Append the occupancy probability to the matching score */
             sumScores[j] = (i == 0) ? static_cast<int>(mapValues[j]) :
                            static_cast<int>(sumScores[j] + mapValues[j]);
-            /* Count the number of the known (valid) grid cells */
-            numOfKnownCells[j] = (i == 0) ? isValid :
-                                 numOfKnownCells[j] + isValid;
         }
     }
 }
@@ -656,8 +629,7 @@ void ComputeScoreOnCoarseMapParallelXY(
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
     const int baseOffsetX, const int baseOffsetY,
-    int sumScores[MAP_CHUNK * MAP_CHUNK_2],
-    int numOfKnownCells[MAP_CHUNK * MAP_CHUNK_2])
+    int sumScores[MAP_CHUNK * MAP_CHUNK_2])
 {
 #pragma HLS INLINE off
 
@@ -691,15 +663,10 @@ void ComputeScoreOnCoarseMapParallelXY(
             /* Only the grid cells which are observed at least once and
              * have known occupancy probability values are considered in the
              * score computation */
-            const int isValid = mapValue.is_zero() ? 0 : 1;
 
             /* Append the occupancy probability to the matching score */
             sumScores[j] = (i == 0) ? static_cast<int>(mapValue) :
                            static_cast<int>(sumScores[j] + mapValue);
-
-            /* Count the number of the known (valid) grid cells */
-            numOfKnownCells[j] = (i == 0) ? isValid :
-                                 numOfKnownCells[j] + isValid;
         }
     }
 }
@@ -716,7 +683,7 @@ void OptimizePose(
     const Angle scanAngles[MAX_NUM_OF_SCANS],
     const int winX, const int winY, const int winTheta,
     const Float stepX, const Float stepY, const Angle stepTheta,
-    const int scoreThreshold, const int knownGridCellsThreshold,
+    const int scoreThreshold,
     int& scoreMax, int& bestX, int& bestY, int& bestTheta)
 {
     /* Initialize the solution */
@@ -764,20 +731,17 @@ void OptimizePose(
                 /* Evaluate the score using the coarse grid map */
                 int sumScores[MAP_CHUNK * MAP_CHUNK_2];
 #pragma HLS ARRAY_PARTITION variable=sumScores complete dim=1
-                int numOfKnownCells[MAP_CHUNK * MAP_CHUNK_2];
-#pragma HLS ARRAY_PARTITION variable=numOfKnownCells complete dim=1
 
                 ComputeScoreOnCoarseMapParallelXY(
                     coarseGridMap, mapSizeX, mapSizeY,
                     numOfScans, scanPoints, x, y,
-                    sumScores, numOfKnownCells);
+                    sumScores);
 
                 for (int i = 0; i < MAP_CHUNK * MAP_CHUNK_2; ++i) {
                     /* Do not evaluate the high-resolution grid map if
                      * the upper-bound score obtained from the low-resolution
                      * coarser grid map is below a current maximum score */
-                    if (sumScores[i] <= scoreMax ||
-                        numOfKnownCells[i] <= knownGridCellsThreshold)
+                    if (sumScores[i] <= scoreMax)
                         continue;
 
                     /* Evaluate the score using the high-resolution grid map,
@@ -952,8 +916,7 @@ void SetupGridMap(
 void ScanMatchCorrelative(
     hls::stream<AxiStreamData>& inStream,
     hls::stream<AxiStreamData>& outStream,
-    const int numOfScans, const float scanRangeMax,
-    const int scoreThreshold, const int knownGridCellsThreshold,
+    const int numOfScans, const float scanRangeMax, const int scoreThreshold,
     const float poseX, const float poseY, const float poseTheta,
     const int mapSizeX, const int mapSizeY,
     const float mapMinX, const float mapMinY,
@@ -966,7 +929,6 @@ void ScanMatchCorrelative(
 #pragma HLS INTERFACE s_axilite port=numOfScans
 #pragma HLS INTERFACE s_axilite port=scanRangeMax
 #pragma HLS INTERFACE s_axilite port=scoreThreshold
-#pragma HLS INTERFACE s_axilite port=knownGridCellsThreshold
 #pragma HLS INTERFACE s_axilite port=poseX
 #pragma HLS INTERFACE s_axilite port=poseY
 #pragma HLS INTERFACE s_axilite port=poseTheta
@@ -1058,7 +1020,7 @@ void ScanMatchCorrelative(
     OptimizePose(mapLocalPose, mapMinPos, mapSizeX, mapSizeY,
                  gridMap, coarseGridMap, numOfScans, scanRanges, scanAngles,
                  winX, winY, winTheta, fixedStepX, fixedStepY, fixedStepTheta,
-                 scoreThreshold, knownGridCellsThreshold,
+                 scoreThreshold,
                  scoreMax, bestX, bestY, bestTheta);
 
     /* Transfer the final results (maximum score and the pose) */
