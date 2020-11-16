@@ -224,10 +224,10 @@ void ComputeScoreOnMapParallelX(
 
     /* Choose the maximum score and its corresponding number of the known
      * grid cells with valid occupancy probability values */
-    const int bestIdx = IndexOfMaxValue8(sumScores);
+    int bestIdx;
+    MaxValueAndIndex8(sumScores, bestSumScore, bestIdx);
 
     /* Return the result */
-    bestSumScore = sumScores[bestIdx];
     bestX = baseOffsetX + bestIdx;
 }
 
@@ -381,10 +381,10 @@ void ComputeScoreOnMapParallelXY(
 
     /* Choose the maximum score and its corresponding number of the known
      * grid cells with valid occupancy probability values */
-    const int bestIdx = IndexOfMaxValue32(sumScores);
+    int bestIdx;
+    MaxValueAndIndex32(sumScores, bestSumScore, bestIdx);
 
     /* Return the result */
-    bestSumScore = sumScores[bestIdx];
     bestX = baseOffsetX + (bestIdx % 8);
     bestY = offsetY + (bestIdx / 8);
 }
