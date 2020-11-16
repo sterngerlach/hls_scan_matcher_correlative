@@ -649,6 +649,61 @@ void GetCoarseMapValuesParallelXY(
         mapValues[y] = mapChunks0[y + shiftY];
 }
 
+/* Compute the matching score based on the discretized scan points */
+void ComputeScoreOnCoarseMapParallelXY(
+    const MapValue coarseGridMap[MAP_Y][MAP_X],
+    const int mapSizeX, const int mapSizeY,
+    const int numOfScans,
+    const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
+    const int baseOffsetX, const int baseOffsetY,
+    int sumScores[MAP_CHUNK * MAP_CHUNK_2],
+    int numOfKnownCells[MAP_CHUNK * MAP_CHUNK_2])
+{
+#pragma HLS INLINE off
+
+    /* Parallelize the score computation along both X-axis and Y-axis */
+    MapChunk mapValues[MAP_CHUNK_2];
+#pragma HLS ARRAY_PARTITION variable=mapValues complete dim=1
+
+    /* Compute the matching score using the coarse grid map */
+    for (int i = 0; i < numOfScans; ++i) {
+#pragma HLS LOOP_TRIPCOUNT min=180 max=512 avg=360
+#pragma HLS LOOP_FLATTEN off
+#pragma HLS PIPELINE II=2
+        /* Compute the grid cell index */
+        const Point2D<int> scanPoint = scanPoints[i];
+        const int hitIdxX = scanPoint.mX + baseOffsetX;
+        const int hitIdxY = scanPoint.mY + baseOffsetY;
+
+        /* Retrieve the occupancy probability values in the coarse grid map */
+        GetCoarseMapValuesParallelXY(
+            coarseGridMap, mapSizeX, mapSizeY,
+            hitIdxX, hitIdxY, mapValues);
+
+        /* Parallelize the score computation */
+        for (int j = 0; j < MAP_CHUNK * MAP_CHUNK_2; ++j) {
+            /* Split the grid map value from the chunk */
+            const int offsetX = j % MAP_CHUNK;
+            const int offsetY = j / MAP_CHUNK;
+            const MapValue mapValue =
+                mapValues[offsetY]((offsetX << 3) + 7, offsetX << 3);
+
+            /* Only the grid cells which are observed at least once and
+             * have known occupancy probability values are considered in the
+             * score computation */
+            const int isValid = mapValue.is_zero() ? 0 : 1;
+
+            /* Append the occupancy probability to the matching score */
+            sumScores[j] = (i == 0) ? static_cast<int>(mapValue) :
+                           static_cast<int>(sumScores[j] + mapValue);
+
+            /* Count the number of the known (valid) grid cells */
+            numOfKnownCells[j] = (i == 0) ? isValid :
+                                 numOfKnownCells[j] + isValid;
+        }
+    }
+}
+
 /* Optimize the sensor pose by real-time correlative scan matching */
 void OptimizePose(
     const RobotPose2D& mapLocalPose,
