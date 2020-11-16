@@ -6,6 +6,7 @@
 .reference/
 .settings/
 local-map-images/
+solution/
 
 .cproject
 .project
