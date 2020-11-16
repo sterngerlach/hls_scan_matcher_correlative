@@ -1026,14 +1026,18 @@ void ScanMatchCorrelative(
 
     /* Grid map and the coarse grid map */
     MapValue gridMap[MAP_Y][MAP_X];
-#pragma HLS ARRAY_PARTITION variable=gridMap cyclic factor=4 dim=1
 #pragma HLS ARRAY_PARTITION variable=gridMap cyclic factor=8 dim=2
 
-    /* coarseGridMap[y]: (y, 0), (y, 8), ..., (y, 312),
-     *                   (y, 1), (y, 9), ..., (y, 313), ...
-     *                   (y, 7), (y, 15), ..., (y, 319)
-     * nth element is stored in the (n % 8) * 40 + (n / 8) */
+    /* coarseGridMap[y, .]: (y, 0), (y, 8), ..., (y, 312),
+     *                      (y, 1), (y, 9), ..., (y, 313), ...
+     *                      (y, 7), (y, 15), ..., (y, 319)
+     * coarseGridMap[., x]: (0, x), (4, x), ..., (316, x),
+     *                      (1, x), (5, x), ..., (317, x), ...
+     *                      (3, x), (7, x), ..., (319, x)
+     * xth element is stored in (n % 8) * 40 + (n / 8)
+     * yth element is stored in (n % 4) * 80 + (n / 4) */
     MapValue coarseGridMap[MAP_Y][MAP_X];
+#pragma HLS ARRAY_PARTITION variable=coarseGridMap cyclic factor=4 dim=1
 #pragma HLS ARRAY_PARTITION variable=coarseGridMap cyclic factor=8 dim=2
 
     /* Read the scan data */
