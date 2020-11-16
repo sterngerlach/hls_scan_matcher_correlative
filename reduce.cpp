@@ -3,8 +3,10 @@
 
 #include "reduce.h"
 
-/* Get the index of the maximum value from the array with 8 elements */
-int IndexOfMaxValue8(const int values[8])
+/* Get the maximum value and its corresponding index from
+ * the integer array with 8 elements */
+void MaxValueAndIndex8(const int values[8],
+                       int& maxValue, int& maxIdx)
 {
     int idx0 = values[0] > values[4] ? 0 : 4;
     int idx1 = values[1] > values[5] ? 1 : 5;
@@ -21,18 +23,15 @@ int IndexOfMaxValue8(const int values[8])
     value0 = value0 > value2 ? value0 : value2;
     value1 = value1 > value3 ? value1 : value3;
 
-    idx0 = value0 > value1 ? idx0 : idx1;
-    value0 = value0 > value1 ? value0 : value1;
-
-    return idx0;
+    maxIdx = value0 > value1 ? idx0 : idx1;
+    maxValue = value0 > value1 ? value0 : value1;
 }
 
-/* Get the index of the maximum value from the array with 32 elements */
-int IndexOfMaxValue32(const int values[32])
+/* Get the maximum value and its corresponding index from
+ * the integer array with 32 elements */
+void MaxValueAndIndex32(const int values[32],
+                        int& maxValue, int& maxIdx)
 {
-    int idxMax = 0;
-    int valueMax = 0;
-
     for (int i = 0; i < 4; ++i) {
         int idx0 = values[(i << 3) + 0] > values[(i << 3) + 4] ? 0 : 4;
         int idx1 = values[(i << 3) + 1] > values[(i << 3) + 5] ? 1 : 5;
@@ -58,11 +57,11 @@ int IndexOfMaxValue32(const int values[32])
 
         idx0 += (i << 3);
 
-        idxMax = value0 > valueMax ? idx0 : idxMax;
-        valueMax = value0 > valueMax ? value0 : valueMax;
+        maxIdx = (i == 0) ? idx0 :
+                 (value0 > maxValue) ? idx0 : maxIdx;
+        maxValue = (i == 0) ? value0 :
+                   (value0 > maxValue) ? value0 : maxValue;
     }
-
-    return idxMax;
 }
 
 /* Get the maximum values from the window with 8 consecutive elements */

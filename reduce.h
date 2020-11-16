@@ -9,11 +9,15 @@
 /* Get the maximum values from the window with 8 consecutive elements */
 ap_uint<8> MaxValue8(const ap_uint<64> window);
 
-/* Get the index of the maximum value from the array with 8 elements */
-int IndexOfMaxValue8(const int values[8]);
+/* Get the maximum value and its corresponding index from
+ * the integer array with 8 elements */
+void MaxValueAndIndex8(const int values[8],
+                       int& maxValue, int& maxIdx);
 
-/* Get the index of the maximum value from the array with 32 elements */
-int IndexOfMaxValue32(const int values[32]);
+/* Get the maximum value and its corresponding index from
+ * the integer array with 32 elements */
+void MaxValueAndIndex32(const int values[32],
+                        int& maxValue, int& maxIdx);
 
 /* Get the sum of the 16 values */
 template <typename T>
