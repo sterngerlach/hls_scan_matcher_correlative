@@ -754,25 +754,25 @@ void OptimizePose(
         /* `winX` and `winY` are represented in the number of the grid cells
          * For given `t`, the projected scan points `scanPoints` are related
          * by pure translation for the `x` and `y` search directions */
-        for (int y = 0; y < winY; y += MAP_CHUNK) {
-#pragma HLS LOOP_TRIPCOUNT min=40 max=40 avg=40
+        for (int y = 0; y < winY; y += MAP_CHUNK * 4) {
+#pragma HLS LOOP_TRIPCOUNT min=10 max=10 avg=10
 #pragma HLS LOOP_FLATTEN off
             for (int x = 0; x < winX; x += MAP_CHUNK * 8) {
 #pragma HLS LOOP_TRIPCOUNT min=5 max=5 avg=5
 #pragma HLS LOOP_FLATTEN off
 
                 /* Evaluate the score using the coarse grid map */
-                int sumScores[MAP_CHUNK];
+                int sumScores[MAP_CHUNK * MAP_CHUNK_2];
 #pragma HLS ARRAY_PARTITION variable=sumScores complete dim=1
-                int numOfKnownCells[MAP_CHUNK];
+                int numOfKnownCells[MAP_CHUNK * MAP_CHUNK_2];
 #pragma HLS ARRAY_PARTITION variable=numOfKnownCells complete dim=1
 
-                ComputeScoreOnCoarseMapParallelX(
+                ComputeScoreOnCoarseMapParallelXY(
                     coarseGridMap, mapSizeX, mapSizeY,
                     numOfScans, scanPoints, x, y,
                     sumScores, numOfKnownCells);
 
-                for (int i = 0; i < MAP_CHUNK; ++i) {
+                for (int i = 0; i < MAP_CHUNK * MAP_CHUNK_2; ++i) {
                     /* Do not evaluate the high-resolution grid map if
                      * the upper-bound score obtained from the low-resolution
                      * coarser grid map is below a current maximum score */
@@ -783,9 +783,12 @@ void OptimizePose(
                     /* Evaluate the score using the high-resolution grid map,
                      * Update the maximum score and the grid cell index inside
                      * the search window */
-                    EvaluateOnMapParallelXY(
+                    const int offsetX = (i % MAP_CHUNK) << 3;
+                    const int offsetY = (i / MAP_CHUNK) << 3;
+
+                    EvaluateOnMapParallelX(
                         gridMap, mapSizeX, mapSizeY,
-                        numOfScans, scanPoints, x + (i << 3), y, t,
+                        numOfScans, scanPoints, x + offsetX, y + offsetY, t,
                         scoreMax, bestX, bestY, bestTheta);
                 }
             }
