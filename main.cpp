@@ -454,21 +454,21 @@ void GetCoarseMapValuesParallelX(
      * elements at (80, idxY) to (87, idxY) and store them to `mapChunk0`
      * using the below code */
     const int baseX = (idxX >> 6) + offsetX * 5;
-    mapChunk0(7, 0) = (baseX * 8 < maxX) ?
+    mapChunk0(5, 0) = (baseX * 8 < maxX) ?
                       coarseGridMap[idxY][baseX * 8] : Zero;
-    mapChunk0(15, 8) = (baseX * 8 + 1 < maxX) ?
+    mapChunk0(11, 6) = (baseX * 8 + 1 < maxX) ?
                        coarseGridMap[idxY][baseX * 8 + 1] : Zero;
-    mapChunk0(23, 16) = (baseX * 8 + 2 < maxX) ?
+    mapChunk0(17, 12) = (baseX * 8 + 2 < maxX) ?
                         coarseGridMap[idxY][baseX * 8 + 2] : Zero;
-    mapChunk0(31, 24) = (baseX * 8 + 3 < maxX) ?
+    mapChunk0(23, 18) = (baseX * 8 + 3 < maxX) ?
                         coarseGridMap[idxY][baseX * 8 + 3] : Zero;
-    mapChunk0(39, 32) = (baseX * 8 + 4 < maxX) ?
+    mapChunk0(29, 24) = (baseX * 8 + 4 < maxX) ?
                         coarseGridMap[idxY][baseX * 8 + 4] : Zero;
-    mapChunk0(47, 40) = (baseX * 8 + 5 < maxX) ?
+    mapChunk0(35, 30) = (baseX * 8 + 5 < maxX) ?
                         coarseGridMap[idxY][baseX * 8 + 5] : Zero;
-    mapChunk0(55, 48) = (baseX * 8 + 6 < maxX) ?
+    mapChunk0(41, 36) = (baseX * 8 + 6 < maxX) ?
                         coarseGridMap[idxY][baseX * 8 + 6] : Zero;
-    mapChunk0(63, 56) = (baseX * 8 + 7 < maxX) ?
+    mapChunk0(47, 42) = (baseX * 8 + 7 < maxX) ?
                         coarseGridMap[idxY][baseX * 8 + 7] : Zero;
 
     /* Access the next 8 elements */
@@ -476,40 +476,40 @@ void GetCoarseMapValuesParallelX(
      * (88, idxY) to (95, idxY) and stores them to `mapChunk1`
      * using the below code */
     const int nextX = baseX + 1;
-    mapChunk1(7, 0) = (nextX * 8 < maxX) ?
+    mapChunk1(5, 0) = (nextX * 8 < maxX) ?
                       coarseGridMap[idxY][nextX * 8] : Zero;
-    mapChunk1(15, 8) = (nextX * 8 + 1 < maxX) ?
+    mapChunk1(11, 6) = (nextX * 8 + 1 < maxX) ?
                        coarseGridMap[idxY][nextX * 8 + 1] : Zero;
-    mapChunk1(23, 16) = (nextX * 8 + 2 < maxX) ?
+    mapChunk1(17, 12) = (nextX * 8 + 2 < maxX) ?
                         coarseGridMap[idxY][nextX * 8 + 2] : Zero;
-    mapChunk1(31, 24) = (nextX * 8 + 3 < maxX) ?
+    mapChunk1(23, 18) = (nextX * 8 + 3 < maxX) ?
                         coarseGridMap[idxY][nextX * 8 + 3] : Zero;
-    mapChunk1(39, 32) = (nextX * 8 + 4 < maxX) ?
+    mapChunk1(29, 24) = (nextX * 8 + 4 < maxX) ?
                         coarseGridMap[idxY][nextX * 8 + 4] : Zero;
-    mapChunk1(47, 40) = (nextX * 8 + 5 < maxX) ?
+    mapChunk1(35, 30) = (nextX * 8 + 5 < maxX) ?
                         coarseGridMap[idxY][nextX * 8 + 5] : Zero;
-    mapChunk1(55, 48) = (nextX * 8 + 6 < maxX) ?
+    mapChunk1(41, 36) = (nextX * 8 + 6 < maxX) ?
                         coarseGridMap[idxY][nextX * 8 + 6] : Zero;
-    mapChunk1(63, 56) = (nextX * 8 + 7 < maxX) ?
+    mapChunk1(47, 42) = (nextX * 8 + 7 < maxX) ?
                         coarseGridMap[idxY][nextX * 8 + 7] : Zero;
 
     /* Get elements `baseX * 8 + shiftX` to `baseX * 8 + shiftX + 7` */
     /* If the `idxX` is 42, this function gets the necessary elements at
      * (85, idxY) to (92, idxY) using the above chunks */
     const int shiftX = (idxX >> 3) % 8;
-    mapChunk0 >>= (shiftX * 8);
-    mapChunk1 <<= (64 - shiftX * 8);
+    mapChunk0 >>= (shiftX * 6);
+    mapChunk1 <<= (48 - shiftX * 6);
     const MapChunk mapChunk = mapChunk0 | mapChunk1;
 
     /* Store the final elements */
-    mapValues[0] = mapChunk(7, 0);
-    mapValues[1] = mapChunk(15, 8);
-    mapValues[2] = mapChunk(23, 16);
-    mapValues[3] = mapChunk(31, 24);
-    mapValues[4] = mapChunk(39, 32);
-    mapValues[5] = mapChunk(47, 40);
-    mapValues[6] = mapChunk(55, 48);
-    mapValues[7] = mapChunk(63, 56);
+    mapValues[0] = mapChunk(5, 0);
+    mapValues[1] = mapChunk(11, 6);
+    mapValues[2] = mapChunk(17, 12);
+    mapValues[3] = mapChunk(23, 18);
+    mapValues[4] = mapChunk(29, 24);
+    mapValues[5] = mapChunk(35, 30);
+    mapValues[6] = mapChunk(41, 36);
+    mapValues[7] = mapChunk(47, 42);
 }
 
 /* Evaluate the matching score based on the discretized scan points */
