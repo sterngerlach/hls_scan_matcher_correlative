@@ -889,9 +889,7 @@ void SetupGridMap(
                 for (int i = 0; i < MAP_CHUNK; ++i)
 #pragma HLS UNROLL
                     gridMap[y][(x << 3) + i] =
-                        mapChunk((i << 3) + 7, i << 3);
-            } else {
-                mapChunk = 0;
+                        mapChunk((i << 3) + 7, i << 3 + 2);
             }
 
             /* Compute the maximum occupancy probability value using
@@ -905,11 +903,11 @@ void SetupGridMap(
                 const int posX = (x << 3) + i;
                 /* Store the intermediate result */
                 intermediateCache[posX] =
-                    (intermediateCache[posX] << 8) | maxValue;
+                    (intermediateCache[posX] << 6) | maxValue;
                 /* Update the sliding window */
-                horizontalWindow >>= 8;
-                horizontalWindow(63, 56) = mapChunk(7, 0);
-                mapChunk >>= 8;
+                horizontalWindow >>= 6;
+                horizontalWindow(47, 42) = mapChunk(5, 0);
+                mapChunk >>= 6;
             }
         }
 
