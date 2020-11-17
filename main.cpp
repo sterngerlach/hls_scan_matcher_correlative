@@ -125,56 +125,56 @@ void GetMapValuesParallelX(
 
     /* Access the 8 consecutive elements `beginX` to `beginX + 7` */
     const int baseX = beginX / 8;
-    mapChunk0(7, 0) = (baseX * 8 < mapSizeX) ?
+    mapChunk0(5, 0) = (baseX * 8 < mapSizeX) ?
                       gridMap[idxY][baseX * 8] : Zero;
-    mapChunk0(15, 8) = (baseX * 8 + 1 < mapSizeX) ?
+    mapChunk0(11, 6) = (baseX * 8 + 1 < mapSizeX) ?
                        gridMap[idxY][baseX * 8 + 1] : Zero;
-    mapChunk0(23, 16) = (baseX * 8 + 2 < mapSizeX) ?
+    mapChunk0(17, 12) = (baseX * 8 + 2 < mapSizeX) ?
                         gridMap[idxY][baseX * 8 + 2] : Zero;
-    mapChunk0(31, 24) = (baseX * 8 + 3 < mapSizeX) ?
+    mapChunk0(23, 18) = (baseX * 8 + 3 < mapSizeX) ?
                         gridMap[idxY][baseX * 8 + 3] : Zero;
-    mapChunk0(39, 32) = (baseX * 8 + 4 < mapSizeX) ?
+    mapChunk0(29, 24) = (baseX * 8 + 4 < mapSizeX) ?
                         gridMap[idxY][baseX * 8 + 4] : Zero;
-    mapChunk0(47, 40) = (baseX * 8 + 5 < mapSizeX) ?
+    mapChunk0(35, 30) = (baseX * 8 + 5 < mapSizeX) ?
                         gridMap[idxY][baseX * 8 + 5] : Zero;
-    mapChunk0(55, 48) = (baseX * 8 + 6 < mapSizeX) ?
+    mapChunk0(41, 36) = (baseX * 8 + 6 < mapSizeX) ?
                         gridMap[idxY][baseX * 8 + 6] : Zero;
-    mapChunk0(63, 56) = (baseX * 8 + 7 < mapSizeX) ?
+    mapChunk0(47, 42) = (baseX * 8 + 7 < mapSizeX) ?
                         gridMap[idxY][baseX * 8 + 7] : Zero;
 
     /* Access the 8 consecutive elements `beginX + 8` to `beginX + 15` */
     const int nextX = baseX + 1;
-    mapChunk1(7, 0) = (nextX * 8 < mapSizeX) ?
+    mapChunk1(5, 0) = (nextX * 8 < mapSizeX) ?
                       gridMap[idxY][nextX * 8] : Zero;
-    mapChunk1(15, 8) = (nextX * 8 + 1 < mapSizeX) ?
+    mapChunk1(11, 6) = (nextX * 8 + 1 < mapSizeX) ?
                        gridMap[idxY][nextX * 8 + 1] : Zero;
-    mapChunk1(23, 16) = (nextX * 8 + 2 < mapSizeX) ?
+    mapChunk1(17, 12) = (nextX * 8 + 2 < mapSizeX) ?
                         gridMap[idxY][nextX * 8 + 2] : Zero;
-    mapChunk1(31, 24) = (nextX * 8 + 3 < mapSizeX) ?
+    mapChunk1(23, 18) = (nextX * 8 + 3 < mapSizeX) ?
                         gridMap[idxY][nextX * 8 + 3] : Zero;
-    mapChunk1(39, 32) = (nextX * 8 + 4 < mapSizeX) ?
+    mapChunk1(29, 24) = (nextX * 8 + 4 < mapSizeX) ?
                         gridMap[idxY][nextX * 8 + 4] : Zero;
-    mapChunk1(47, 40) = (nextX * 8 + 5 < mapSizeX) ?
+    mapChunk1(35, 30) = (nextX * 8 + 5 < mapSizeX) ?
                         gridMap[idxY][nextX * 8 + 5] : Zero;
-    mapChunk1(55, 48) = (nextX * 8 + 6 < mapSizeX) ?
+    mapChunk1(41, 36) = (nextX * 8 + 6 < mapSizeX) ?
                         gridMap[idxY][nextX * 8 + 6] : Zero;
-    mapChunk1(63, 56) = (nextX * 8 + 7 < mapSizeX) ?
+    mapChunk1(47, 42) = (nextX * 8 + 7 < mapSizeX) ?
                         gridMap[idxY][nextX * 8 + 7] : Zero;
 
     /* Get elements `idxX` to `idxX + 7` from the above chunks */
-    mapChunk0 >>= (offsetX * 8);
-    mapChunk1 <<= (64 - offsetX * 8);
+    mapChunk0 >>= (offsetX * 6);
+    mapChunk1 <<= (48 - offsetX * 6);
     const MapChunk mapChunk = mapChunk0 | mapChunk1;
 
     /* Store the final elements */
-    mapValues[0] = mapChunk(7, 0);
-    mapValues[1] = mapChunk(15, 8);
-    mapValues[2] = mapChunk(23, 16);
-    mapValues[3] = mapChunk(31, 24);
-    mapValues[4] = mapChunk(39, 32);
-    mapValues[5] = mapChunk(47, 40);
-    mapValues[6] = mapChunk(55, 48);
-    mapValues[7] = mapChunk(63, 56);
+    mapValues[0] = mapChunk(5, 0);
+    mapValues[1] = mapChunk(11, 6);
+    mapValues[2] = mapChunk(17, 12);
+    mapValues[3] = mapChunk(23, 18);
+    mapValues[4] = mapChunk(29, 24);
+    mapValues[5] = mapChunk(35, 30);
+    mapValues[6] = mapChunk(41, 36);
+    mapValues[7] = mapChunk(47, 42);
 }
 
 /* Evaluate the matching score based on the discretized scan points */
