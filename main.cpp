@@ -586,7 +586,7 @@ void GetCoarseMapValuesParallelXY(
 #pragma HLS UNROLL skip_exit_check factor=4
         for (int x = 0; x < MAP_CHUNK; ++x) {
 #pragma HLS UNROLL
-            mapChunks0[y]((x * 8) + 7, x * 8) =
+            mapChunks0[y]((x * 6) + 5, x * 6) =
                 ((baseY * 4 + y < maxY) && (baseX * 8 + x < maxX)) ?
                 coarseGridMap[baseY * 4 + y][baseX * 8 + x] : Zero;
         }
@@ -599,7 +599,7 @@ void GetCoarseMapValuesParallelXY(
 #pragma HLS UNROLL skip_exit_check factor=4
         for (int x = 0; x < MAP_CHUNK; ++x) {
 #pragma HLS UNROLL
-            mapChunks1[y]((x * 8) + 7, x * 8) =
+            mapChunks1[y]((x * 6) + 5, x * 6) =
                 ((baseY * 4 + y < maxY) && (nextX * 8 + x < maxX)) ?
                 coarseGridMap[baseY * 4 + y][nextX * 8 + x] : Zero;
         }
@@ -611,8 +611,8 @@ void GetCoarseMapValuesParallelXY(
 
     for (int y = 0; y < MAP_CHUNK; ++y) {
 #pragma HLS UNROLL
-        mapChunks0[y] >>= (shiftX * 8);
-        mapChunks1[y] <<= (64 - shiftX * 8);
+        mapChunks0[y] >>= (shiftX * 6);
+        mapChunks1[y] <<= (48 - shiftX * 6);
         mapChunks0[y] = mapChunks0[y] | mapChunks1[y];
     }
 
