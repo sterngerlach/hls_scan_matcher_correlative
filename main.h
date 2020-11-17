@@ -37,9 +37,9 @@
 #define NUM_OF_2_CHUNKS             80
 
 /* Type definition for grid cell value (discretized occupancy probability) */
-typedef ap_uint<8>       MapValue;
+typedef ap_uint<6>       MapValue;
 /* Type definition for the grid map chunk (8 consecutive grid map elements) */
-typedef ap_uint<64>      MapChunk;
+typedef ap_uint<48>      MapChunk;
 
 /* Type definitions for floating-point numbers */
 typedef ap_fixed<32, 16> Float;
