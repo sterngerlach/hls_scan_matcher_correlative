@@ -7,7 +7,7 @@
 #include <ap_int.h>
 
 /* Get the maximum values from the window with 8 consecutive elements */
-ap_uint<8> MaxValue8(const ap_uint<64> window);
+ap_uint<6> MaxValue8(const ap_uint<48> window);
 
 /* Get the maximum value and its corresponding index from
  * the integer array with 8 elements */

@@ -65,16 +65,16 @@ void MaxValueAndIndex32(const int values[32],
 }
 
 /* Get the maximum values from the window with 8 consecutive elements */
-ap_uint<8> MaxValue8(const ap_uint<64> window)
+ap_uint<6> MaxValue8(const ap_uint<48> window)
 {
-    ap_uint<8> value0 = window(7, 0);
-    ap_uint<8> value1 = window(15, 8);
-    ap_uint<8> value2 = window(23, 16);
-    ap_uint<8> value3 = window(31, 24);
-    ap_uint<8> value4 = window(39, 32);
-    ap_uint<8> value5 = window(47, 40);
-    ap_uint<8> value6 = window(55, 48);
-    ap_uint<8> value7 = window(63, 56);
+    ap_uint<6> value0 = window(5, 0);
+    ap_uint<6> value1 = window(11, 6);
+    ap_uint<6> value2 = window(17, 12);
+    ap_uint<6> value3 = window(23, 18);
+    ap_uint<6> value4 = window(29, 24);
+    ap_uint<6> value5 = window(35, 30);
+    ap_uint<6> value6 = window(41, 36);
+    ap_uint<6> value7 = window(47, 42);
 
     value0 = value0 > value4 ? value0 : value4;
     value1 = value1 > value5 ? value1 : value5;
