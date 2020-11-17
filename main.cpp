@@ -368,7 +368,7 @@ void ComputeScoreOnMapParallelXY(
             const int offsetX = j % 8;
             const int offsetY = j / 8;
             const MapValue mapValue =
-                mapValues[offsetY]((offsetX << 3) + 7, offsetX << 3);
+                mapValues[offsetY]((offsetX * 6) + 5, offsetX * 6);
 
             /* Only the grid cells which are observed at least once and
              * have known occupancy probability values are considered in the
