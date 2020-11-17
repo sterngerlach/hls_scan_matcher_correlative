@@ -671,6 +671,24 @@ void ComputeScoreOnCoarseMapParallelXY(
     }
 }
 
+/* Retrieve the occupancy probability values in the coarse grid map */
+void GetCoarseMapValuesAllX(
+    const MapValue coarseGridMap[MAP_Y][MAP_X],
+    const int mapSizeX, const int mapSizeY,
+    const int idxX, const int idxY,
+    MapValue mapValues[MAP_X / MAP_CHUNK])
+{
+    /* const MapValue Zero = static_cast<MapValue>(0); */
+
+    const int offsetX = idxX & 0x7;
+    /* const int skipX = idxX >> 3; */
+
+    /* Store the 40 elements */
+    for (int i = 0; i < 40; ++i)
+#pragma HLS UNROLL skip_exit_check factor=8
+        mapValues[i] = coarseGridMap[idxY][offsetX * 40 + i];
+}
+
 /* Optimize the sensor pose by real-time correlative scan matching */
 void OptimizePose(
     const RobotPose2D& mapLocalPose,
