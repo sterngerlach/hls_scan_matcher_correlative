@@ -689,6 +689,56 @@ void GetCoarseMapValuesAllX(
         mapValues[i] = coarseGridMap[idxY][offsetX * 40 + i];
 }
 
+/* Compute the matching score based on the discretized scan points */
+void ComputeScoreOnCoarseMapAllX(
+    const MapValue coarseGridMap[MAP_Y][MAP_X],
+    const int mapSizeX, const int mapSizeY,
+    const int numOfScans,
+    const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
+    const int offsetY,
+    int sumScores[MAP_X / MAP_CHUNK])
+{
+#pragma HLS INLINE off
+
+    const MapValue Zero = static_cast<MapValue>(0);
+
+    /* Parallelize the score computation along the X-axis */
+    MapValue mapValues[MAP_X / MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=mapValues cyclic factor=8 dim=1
+
+    /* Compute the matching score based on the occupancy probability value */
+    for (int i = 0; i < numOfScans; ++i) {
+#pragma HLS LOOP_TRIPCOUNT min=180 max=512 avg=360
+#pragma HLS LOOP_FLATTEN off
+        /* Compute the grid cell index */
+        const Point2D<int> scanPoint = scanPoints[i];
+        const int hitIdxX = scanPoint.mX;
+        const int hitIdxY = scanPoint.mY + offsetY;
+
+        if (hitIdxY < 0 || hitIdxY >= mapSizeY)
+            continue;
+
+        /* Retrieve the occupancy probability values */
+        GetCoarseMapValuesAllX(coarseGridMap, mapSizeX, mapSizeY,
+                               hitIdxX, hitIdxY, mapValues);
+
+        const int skipX = hitIdxX >> 3;
+
+        /* Parallelize the score computation */
+        for (int j = 0; j < MAP_X / MAP_CHUNK; ++j) {
+#pragma HLS UNROLL skip_exit_check factor=8
+            /* Only the grid cells which are observed at least once and
+             * have known occupancy probability values are considered in the
+             * score computation */
+            /* Append the occupancy probability to the matching score */
+            const MapValue mapValue = (j + skipX < 40) ?
+                                      mapValues[skipX + j] : Zero;
+            sumScores[j] = (i == 0) ? static_cast<int>(mapValue) :
+                           static_cast<int>(sumScores[j] + mapValue);
+        }
+    }
+}
+
 /* Optimize the sensor pose by real-time correlative scan matching */
 void OptimizePose(
     const RobotPose2D& mapLocalPose,
