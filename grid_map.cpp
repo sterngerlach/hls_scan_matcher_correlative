@@ -35,6 +35,8 @@ void MapToGridCellCoordinate(
     const Point2D<Float>& mapMinPos,
     Point2D<int>& gridCellIdx)
 {
+#pragma HLS PIPELINE
+
     const Float MapResolutionReciprocal =
         static_cast<Float>(MAP_RESOLUTION_RECIPROCAL);
 
