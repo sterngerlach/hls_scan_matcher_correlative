@@ -440,7 +440,11 @@ void GetCoarseMapValuesParallelX(
     /* Some complex calculations for indices are required here */
 
     const int offsetX = idxX & 0x7;
-    const int maxX = (offsetX + 1) * 40;
+
+    /* Consider the actual map width `mapSizeX` which could be less than
+     * the maximum map width `MAP_X` */
+    const int maxX = offsetX * 40 + (mapSizeX / MAP_CHUNK) +
+                     ((offsetX < mapSizeX % MAP_CHUNK) ? 1 : 0);
 
     /* Store the intermediate 8 elements to `mapChunk` */
     MapChunk mapChunk0 = 0;
