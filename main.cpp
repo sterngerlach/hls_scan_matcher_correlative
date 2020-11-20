@@ -870,7 +870,7 @@ void SetupGridMap(
     MapChunk intermediateCache[MAP_X + MAP_CHUNK];
     MapValue lastRowCache[MAP_X];
 
-    const int mapChunkSizeX = mapSizeX >> 3;
+    const int mapChunkSizeX = (mapSizeX + 7) >> 3;
 
     for (int y = 0; y < mapSizeY; ++y) {
 #pragma HLS LOOP_TRIPCOUNT min=320 max=320 avg=320
