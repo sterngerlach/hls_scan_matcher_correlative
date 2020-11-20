@@ -571,9 +571,16 @@ void GetCoarseMapValuesParallelXY(
     const MapValue Zero = static_cast<MapValue>(0);
 
     const int offsetX = idxX % 8;
-    const int maxX = (offsetX + 1) * 40;
     const int offsetY = idxY % 4;
-    const int maxY = (offsetY + 1) * 80;
+
+    /* Consider the actual map width `mapSizeX` which could be less than
+     * the maximum map width `MAP_X` */
+    const int maxX = offsetX * 40 + (mapSizeX / MAP_CHUNK) +
+                     ((offsetX < mapSizeX % MAP_CHUNK) ? 1 : 0);
+    /* Consider the actual map height `mapSizeY` which could be less than
+     * the maximum map height `MAP_Y` */
+    const int maxY = offsetY * 80 + (mapSizeY / 4) +
+                     ((offsetY < mapSizeY % 4) ? 1 : 0);
 
     /* Store the intermediate 8 elements to `mapChunk` */
     MapChunk mapChunks0[MAP_CHUNK];
