@@ -993,7 +993,7 @@ void ScanMatchCorrelative(
 #pragma HLS INTERFACE s_axilite port=stepX
 #pragma HLS INTERFACE s_axilite port=stepY
 #pragma HLS INTERFACE s_axilite port=stepTheta
-#pragma HLS INTERFACE ap_ctrl_none port=return
+#pragma HLS INTERFACE s_axilite port=return
 
     /* Only grid cells that reside within the range from (0, 0) to
      * (`mapSizeX` - 1, `mapSizeY` - 1) are valid */
