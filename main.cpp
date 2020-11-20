@@ -732,7 +732,13 @@ void ComputeScoreOnCoarseMapAllX(
         GetCoarseMapValuesAllX(coarseGridMap, mapSizeX, mapSizeY,
                                hitIdxX, hitIdxY, mapValues);
 
-        const int skipX = hitIdxX >> 3;
+        /* Consider the actual map width `mapSizeX` which could be less than
+         * the maximum map width `MAP_X` when computing the maximum horizontal
+         * index of the valid grid cell in the coarse grid map `maxX` */
+        const int offsetX = hitIdxX % MAP_CHUNK;
+        const int skipX = hitIdxX / MAP_CHUNK;
+        const int maxX = (mapSizeX / MAP_CHUNK) +
+                         ((offsetX < mapSizeX % MAP_CHUNK) ? 1 : 0);
 
         /* Parallelize the score computation */
         for (int j = 0; j < MAP_X / MAP_CHUNK; ++j) {
@@ -741,7 +747,7 @@ void ComputeScoreOnCoarseMapAllX(
              * have known occupancy probability values are considered in the
              * score computation */
             /* Append the occupancy probability to the matching score */
-            const MapValue mapValue = (j + skipX < 40) ?
+            const MapValue mapValue = (j + skipX < maxX) ?
                                       mapValues[skipX + j] : Zero;
             sumScores[j] = (i == 0) ? static_cast<int>(mapValue) :
                            static_cast<int>(sumScores[j] + mapValue);
