@@ -842,15 +842,6 @@ void ReadScanData(
     Float scanRanges[MAX_NUM_OF_SCANS],
     Angle scanAngles[MAX_NUM_OF_SCANS])
 {
-#pragma HLS ALLOCATION instances=fpext limit=1 operation
-#pragma HLS ALLOCATION instances=ashr limit=1 operation
-#pragma HLS ALLOCATION instances=shl limit=1 operation
-#pragma HLS ALLOCATION instances=select limit=8 operation
-#pragma HLS ALLOCATION instances=icmp limit=8 operation
-#pragma HLS ALLOCATION instances=or limit=8 operation
-#pragma HLS ALLOCATION instances=xor limit=8 operation
-#pragma HLS ALLOCATION instances=and limit=8 operation
-
     /* Received data (scan data is stored) */
     AxiStreamData inData;
 
