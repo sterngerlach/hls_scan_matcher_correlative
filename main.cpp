@@ -720,6 +720,11 @@ void ComputeScoreOnCoarseMapAllX(
     MapValue mapValues[MAP_X / MAP_CHUNK];
 #pragma HLS ARRAY_PARTITION variable=mapValues cyclic factor=8 dim=1
 
+    /* Initialize the scores (very important) */
+    for (int j = 0; j < MAP_X / MAP_CHUNK; ++j)
+#pragma HLS UNROLL skip_exit_check factor=8
+        sumScores[j] = 0;
+
     /* Compute the matching score based on the occupancy probability value */
     for (int i = 0; i < numOfScans; ++i) {
 #pragma HLS LOOP_TRIPCOUNT min=180 max=512 avg=360
@@ -753,8 +758,7 @@ void ComputeScoreOnCoarseMapAllX(
             /* Append the occupancy probability to the matching score */
             const MapValue mapValue = (j + skipX < maxX) ?
                                       mapValues[skipX + j] : Zero;
-            sumScores[j] = (i == 0) ? static_cast<int>(mapValue) :
-                           static_cast<int>(sumScores[j] + mapValue);
+            sumScores[j] += static_cast<int>(mapValue);
         }
     }
 }
