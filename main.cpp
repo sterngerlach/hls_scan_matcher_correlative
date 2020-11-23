@@ -896,7 +896,7 @@ void SetupGridMap(
                 for (int i = 0; i < MAP_CHUNK; ++i)
 #pragma HLS UNROLL
                     gridMap[y][(x << 3) + i] =
-                        mapChunk((i << 3) + 7, i << 3 + 2);
+                        mapChunk((i << 3) + 7, (i << 3) + 2);
             }
 
             /* Compute the maximum occupancy probability value using
