@@ -244,8 +244,6 @@ void EvaluateOnMapParallelX(
     const int baseOffsetX, const int baseOffsetY, const int offsetTheta,
     int& scoreMax, int& bestX, int& bestY, int& bestTheta)
 {
-#pragma HLS INLINE off
-
     /* Search inside the relatively small area */
     for (int y = 0; y < MAP_CHUNK; ++y) {
         /* Evaluate the score using the high-resolution grid map */
