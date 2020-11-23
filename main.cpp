@@ -194,6 +194,11 @@ void ComputeScoreOnMapParallelX(
     MapValue mapValues[MAP_CHUNK];
 #pragma HLS ARRAY_PARTITION variable=mapValues complete dim=1
 
+    /* Initialize the scores (very important) */
+    for (int j = 0; j < MAP_CHUNK; ++j)
+#pragma HLS UNROLL
+        sumScores[j] = 0;
+
     /* Evaluate the matching score based on the occupancy probability value */
     for (int i = 0; i < numOfScans; ++i) {
 #pragma HLS LOOP_TRIPCOUNT min=180 max=512 avg=360
@@ -217,8 +222,7 @@ void ComputeScoreOnMapParallelX(
              * have known occupancy probability values are considered in the
              * score computation */
             /* Append the occupancy probability to the matching score */
-            sumScores[j] = (i == 0) ? static_cast<int>(mapValues[j]) :
-                           static_cast<int>(sumScores[j] + mapValues[j]);
+            sumScores[j] += static_cast<int>(mapValues[j]);
         }
     }
 
