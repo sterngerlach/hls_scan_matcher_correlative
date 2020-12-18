@@ -846,7 +846,8 @@ void ReadScanData(
     hls::stream<AxiStreamData>& inStream,
     const int numOfScans,
     Float scanRanges[MAX_NUM_OF_SCANS],
-    Angle scanAngles[MAX_NUM_OF_SCANS])
+    Angle scanAngles[MAX_NUM_OF_SCANS],
+    volatile ap_uint<2>& ledOut)
 {
     /* Received data (scan data is stored) */
     AxiStreamData inData;
@@ -864,6 +865,9 @@ void ReadScanData(
         scanAngles[i] = static_cast<Angle>(
             UInt32ToFloat(inData.data(63, 32).to_uint()));
     }
+
+    /* Set the LED state (scan data is loaded) */
+    ledOut = static_cast<ApUInt2>(0x01);
 }
 
 /* Setup the original high-resolution grid map and the coarse grid map */
@@ -871,7 +875,8 @@ void SetupGridMap(
     hls::stream<AxiStreamData>& inStream,
     const int mapSizeX, const int mapSizeY,
     MapValue gridMap[MAP_Y][MAP_X],
-    MapValue coarseGridMap[MAP_Y][MAP_X])
+    MapValue coarseGridMap[MAP_Y][MAP_X],
+    volatile ap_uint<2>& ledOut)
 {
     /* Received data (map chunk is stored) */
     AxiStreamData inData;
@@ -974,12 +979,16 @@ void SetupGridMap(
             coarseGridMap[posY][mapX] = lastRowCache[x];
         }
     }
+
+    /* Set the LED state (grid map is loaded) */
+    ledOut = static_cast<ApUInt2>(0x02);
 }
 
 /* Perform real-time correlative scan matching */
 void ScanMatchCorrelative(
     hls::stream<AxiStreamData>& inStream,
     hls::stream<AxiStreamData>& outStream,
+    volatile ap_uint<2>& ledOut,
     const int numOfScans, const float scanRangeMax, const int scoreThreshold,
     const float poseX, const float poseY, const float poseTheta,
     const int mapSizeX, const int mapSizeY,
@@ -990,6 +999,7 @@ void ScanMatchCorrelative(
     /* HLS pragmas for ports */
 #pragma HLS INTERFACE axis register port=inStream
 #pragma HLS INTERFACE axis register port=outStream
+#pragma HLS INTERFACE ap_none register port=ledOut
 #pragma HLS INTERFACE s_axilite port=numOfScans
 #pragma HLS INTERFACE s_axilite port=scanRangeMax
 #pragma HLS INTERFACE s_axilite port=scoreThreshold
@@ -1048,15 +1058,14 @@ void ScanMatchCorrelative(
     MapValue coarseGridMap[MAP_Y][MAP_X];
 #pragma HLS ARRAY_PARTITION variable=coarseGridMap cyclic factor=8 dim=2
 
-    /* Read the scan data */
-    ReadScanData(inStream, numOfScans, scanRanges, scanAngles);
+    ReadScanData(inStream, numOfScans, scanRanges, scanAngles, ledOut);
 
     /* Read the flag to determine whether the grid map should be updated */
     inData = inStream.read();
     /* Read the grid map and compute the coarse grid map if required */
     if (inData.data.to_bool())
         SetupGridMap(inStream, mapSizeX, mapSizeY,
-                     gridMap, coarseGridMap);
+                     gridMap, coarseGridMap, ledOut);
 
     /* Perform the real-time correlative scan matching */
     int scoreMax = 0;
@@ -1084,5 +1093,8 @@ void ScanMatchCorrelative(
     outData.data = (dataHigh, dataLow);
     outData.last = 1;
     outStream << outData;
+
+    /* Set the LED state (scan matching is completed) */
+    ledOut = static_cast<ApUInt2>(0x03);
 }
 

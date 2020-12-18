@@ -47,6 +47,7 @@ typedef ap_fixed<32, 16> Angle;
 typedef ap_fixed<18, 2>  SinCos;
 
 /* Type to suppress compilation errors */
+typedef ap_uint<2>       ApUInt2;
 typedef ap_uint<4>       ApUInt4;
 typedef ap_uint<8>       ApUInt8;
 typedef ap_uint<16>      ApUInt16;
@@ -116,6 +117,7 @@ inline std::ostream& operator<<(
 void ScanMatchCorrelative(
     hls::stream<AxiStreamData>& inStream,
     hls::stream<AxiStreamData>& outStream,
+    volatile ap_uint<2>& ledOut,
     const int numOfScans, const float scanRangeMax, const int scoreThreshold,
     const float poseX, const float poseY, const float poseTheta,
     const int mapSizeX, const int mapSizeY,
