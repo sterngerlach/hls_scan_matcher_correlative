@@ -1058,7 +1058,12 @@ void ScanMatchCorrelative(
     MapValue coarseGridMap[MAP_Y][MAP_X];
 #pragma HLS ARRAY_PARTITION variable=coarseGridMap cyclic factor=8 dim=2
 
-    ReadScanData(inStream, numOfScans, scanRanges, scanAngles, ledOut);
+    /* Read the flag to determine whether the scan data should be updated */
+    inData = inStream.read();
+    /* Read the scan data */
+    if (inData.data.to_bool())
+        ReadScanData(inStream, numOfScans,
+                     scanRanges, scanAngles, ledOut);
 
     /* Read the flag to determine whether the grid map should be updated */
     inData = inStream.read();
