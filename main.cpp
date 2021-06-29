@@ -897,7 +897,7 @@ void SetupGridMap(
 #pragma HLS LOOP_TRIPCOUNT min=41 max=41 avg=41
 #pragma HLS LOOP_FLATTEN off
             /* Read the 8 consecutive elements */
-            MapChunk mapChunk = 0;
+            ap_uint<64> mapChunk = 0;
 
             if (x < mapChunkSizeX) {
                 /* Read the elements from the input stream */
@@ -924,8 +924,8 @@ void SetupGridMap(
                     (intermediateCache[posX] << 6) | maxValue;
                 /* Update the sliding window */
                 horizontalWindow >>= 6;
-                horizontalWindow(47, 42) = mapChunk(5, 0);
-                mapChunk >>= 6;
+                horizontalWindow(47, 42) = mapChunk(7, 2);
+                mapChunk >>= 8;
             }
         }
 
