@@ -330,11 +330,12 @@ void OptimizePose(
                 coarseGridMap, mapSizeX, mapSizeY,
                 numOfScans, scanPoints, y, sumScores);
 
-            for (int i = 0; i < MAP_X / MAP_CHUNK; ++i) {
+            for (int x = 0, i = 0; x < winX; x += MAP_CHUNK, ++i) {
+#pragma HLS LOOP_TRIPCOUNT min=40 max=40 avg=40
                 /* Do not evaluate the high-resolution grid map if
                  * the upper-bound score obtained from the low-resolution
                  * coarser grid map is below a current maximum score */
-                if (sumScores[i] <= scoreMax || (i << 3) >= winX)
+                if (sumScores[i] <= scoreMax)
                     continue;
 
                 /* Evaluate the score using the high-resolution grid map,
@@ -342,7 +343,7 @@ void OptimizePose(
                  * the search window */
                 EvaluateOnMapParallelX(
                     gridMap, mapSizeX, mapSizeY,
-                    numOfScans, scanPoints, i << 3, y, t,
+                    numOfScans, scanPoints, x, y, t,
                     scoreMax, bestX, bestY, bestTheta);
             }
         }
