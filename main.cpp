@@ -179,7 +179,7 @@ void GetCoarseMapValuesAllX(
      * in the coarse grid map `coarseGridMap` */
     const int offsetX = idxX % MAP_CHUNK;
     const int skipX = idxX / MAP_CHUNK;
-    const int maxX = (mapSizeX / MAP_CHUNK) +
+    const int maxX = (offsetX * 40) + (mapSizeX / MAP_CHUNK) +
                      ((offsetX < mapSizeX % MAP_CHUNK) ? 1 : 0);
 
     /* Below uses logical and (&) instead of modulo (%)
