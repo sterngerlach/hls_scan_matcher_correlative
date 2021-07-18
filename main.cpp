@@ -43,36 +43,36 @@ void GetMapValuesParallelX(
 {
     const MapValue Zero = static_cast<MapValue>(0);
 
+    /* Below uses logical and (&) instead of modulo (%)
+     * which somehow produces better results */
     const int offsetX = idxX & 0x7;
     const int beginX = idxX & ~0x7;
+    const int baseX = beginX / MAP_CHUNK;
 
-    /* Store the intermediate 8 elements to `mapChunk` */
+    /* Get 16 values from `baseX * 8` to `baseX * 8 + 15` */
+    /* Note that `baseX * 8 + offsetX` equals to `idxX` */
     MapChunk mapChunk0 = 0;
     MapChunk mapChunk1 = 0;
 
-    /* Access the 8 consecutive elements `beginX` to `beginX + 7` */
-    const int baseX = beginX / 8;
-
-    for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < MAP_CHUNK; ++i)
 #pragma HLS UNROLL
         mapChunk0(i * 6 + 5, i * 6) = (baseX * 8 + i < mapSizeX) ?
             gridMap[idxY][baseX * 8 + i] : Zero;
 
-    /* Access the 8 consecutive elements `beginX + 8` to `beginX + 15` */
     const int nextX = baseX + 1;
 
-    for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < MAP_CHUNK; ++i)
 #pragma HLS UNROLL
         mapChunk1(i * 6 + 5, i * 6) = (nextX * 8 + i < mapSizeX) ?
             gridMap[idxY][nextX * 8 + i] : Zero;
 
-    /* Get elements `idxX` to `idxX + 7` from the above chunks */
+    /* Select 8 values from `idxX` to `idxX + 7` */
     mapChunk0 >>= (offsetX * 6);
     mapChunk1 <<= (48 - offsetX * 6);
     const MapChunk mapChunk = mapChunk0 | mapChunk1;
 
     /* Store the final elements */
-    for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < MAP_CHUNK; ++i)
 #pragma HLS UNROLL
         mapValues[i] = mapChunk(i * 6 + 5, i * 6);
 }
