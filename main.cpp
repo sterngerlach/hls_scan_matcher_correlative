@@ -197,16 +197,37 @@ void GetCoarseMapValuesAllX(
     const MapValue coarseGridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int idxX, const int idxY,
-    MapValue mapValues[MAP_X / MAP_CHUNK])
+    MapValue mapValues[MAP_CHUNK])
 {
-    const int offsetX = idxX & 0x7;
+    const MapValue Zero = static_cast<MapValue>(0);
 
-    /* Store the 40 elements */
-    /* The below code cares about neither the starting index `idxX` nor
-     * the actual map width `mapSizeX` for simplicity */
-    for (int i = 0; i < 40; ++i)
-#pragma HLS UNROLL skip_exit_check factor=8
-        mapValues[i] = coarseGridMap[idxY][offsetX * 40 + i];
+    /* Consider the actual map width `mapSizeX` which could be less than
+     * the maximum map width `MAP_X` when computing the maximum valid index
+     * in the coarse grid map `coarseGridMap` */
+    const int offsetX = idxX % MAP_CHUNK;
+    const int skipX = idxX / MAP_CHUNK;
+    const int maxX = (mapSizeX / MAP_CHUNK) +
+                     ((offsetX < mapSizeX % MAP_CHUNK) ? 1 : 0);
+
+    const int beginX = offsetX * 40 + skipX;
+    const int baseX = beginX / MAP_CHUNK;
+    const int shiftX = beginX % MAP_CHUNK;
+
+    /* Get 16 values from `baseX * 8` to `baseX * 8 + 15` */
+    ap_uint<96> mapChunk = 0;
+
+    for (int i = 0; i < MAP_CHUNK * 2; ++i)
+#pragma HLS UNROLL
+        mapChunk(i * 6 + 5, i * 6) = (baseX * 8 + i < maxX) ?
+            coarseGridMap[idxY][baseX * 8 + i] : Zero;
+
+    /* Select 8 values */
+    mapChunk >>= (shiftX * 6);
+
+    /* Store the selected 8 values */
+    for (int i = 0; i < MAP_CHUNK; ++i)
+#pragma HLS UNROLL
+        mapValues[i] = mapChunk(i * 6 + 5, i * 6);
 }
 
 /* Compute the matching score based on the discretized scan points */
