@@ -182,11 +182,15 @@ void GetCoarseMapValuesAllX(
     const int maxX = (mapSizeX / MAP_CHUNK) +
                      ((offsetX < mapSizeX % MAP_CHUNK) ? 1 : 0);
 
+    /* Below uses logical and (&) instead of modulo (%)
+     * which somehow produces better results */
     const int beginX = offsetX * 40 + skipX;
-    const int baseX = beginX / MAP_CHUNK;
-    const int shiftX = beginX % MAP_CHUNK;
+    const int beginXAligned = beginX & ~0x7;
+    const int shiftX = beginX & 0x7;
+    const int baseX = beginXAligned / MAP_CHUNK;
 
     /* Get 16 values from `baseX * 8` to `baseX * 8 + 15` */
+    /* Note that `baseX * 8 + shiftX` equals to `beginX` */
     ap_uint<96> mapChunk = 0;
 
     for (int i = 0; i < MAP_CHUNK * 2; ++i)
@@ -194,7 +198,7 @@ void GetCoarseMapValuesAllX(
         mapChunk(i * 6 + 5, i * 6) = (baseX * 8 + i < maxX) ?
             coarseGridMap[idxY][baseX * 8 + i] : Zero;
 
-    /* Select 8 values */
+    /* Select 8 values from `beginX` to `beginX + 7` */
     mapChunk >>= (shiftX * 6);
 
     /* Store the selected 8 values */
