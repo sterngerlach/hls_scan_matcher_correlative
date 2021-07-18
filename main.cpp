@@ -52,41 +52,19 @@ void GetMapValuesParallelX(
 
     /* Access the 8 consecutive elements `beginX` to `beginX + 7` */
     const int baseX = beginX / 8;
-    mapChunk0(5, 0) = (baseX * 8 < mapSizeX) ?
-                      gridMap[idxY][baseX * 8] : Zero;
-    mapChunk0(11, 6) = (baseX * 8 + 1 < mapSizeX) ?
-                       gridMap[idxY][baseX * 8 + 1] : Zero;
-    mapChunk0(17, 12) = (baseX * 8 + 2 < mapSizeX) ?
-                        gridMap[idxY][baseX * 8 + 2] : Zero;
-    mapChunk0(23, 18) = (baseX * 8 + 3 < mapSizeX) ?
-                        gridMap[idxY][baseX * 8 + 3] : Zero;
-    mapChunk0(29, 24) = (baseX * 8 + 4 < mapSizeX) ?
-                        gridMap[idxY][baseX * 8 + 4] : Zero;
-    mapChunk0(35, 30) = (baseX * 8 + 5 < mapSizeX) ?
-                        gridMap[idxY][baseX * 8 + 5] : Zero;
-    mapChunk0(41, 36) = (baseX * 8 + 6 < mapSizeX) ?
-                        gridMap[idxY][baseX * 8 + 6] : Zero;
-    mapChunk0(47, 42) = (baseX * 8 + 7 < mapSizeX) ?
-                        gridMap[idxY][baseX * 8 + 7] : Zero;
+
+    for (int i = 0; i < 8; ++i)
+#pragma HLS UNROLL
+        mapChunk0(i * 6 + 5, i * 6) = (baseX * 8 + i < mapSizeX) ?
+            gridMap[idxY][baseX * 8 + i] : Zero;
 
     /* Access the 8 consecutive elements `beginX + 8` to `beginX + 15` */
     const int nextX = baseX + 1;
-    mapChunk1(5, 0) = (nextX * 8 < mapSizeX) ?
-                      gridMap[idxY][nextX * 8] : Zero;
-    mapChunk1(11, 6) = (nextX * 8 + 1 < mapSizeX) ?
-                       gridMap[idxY][nextX * 8 + 1] : Zero;
-    mapChunk1(17, 12) = (nextX * 8 + 2 < mapSizeX) ?
-                        gridMap[idxY][nextX * 8 + 2] : Zero;
-    mapChunk1(23, 18) = (nextX * 8 + 3 < mapSizeX) ?
-                        gridMap[idxY][nextX * 8 + 3] : Zero;
-    mapChunk1(29, 24) = (nextX * 8 + 4 < mapSizeX) ?
-                        gridMap[idxY][nextX * 8 + 4] : Zero;
-    mapChunk1(35, 30) = (nextX * 8 + 5 < mapSizeX) ?
-                        gridMap[idxY][nextX * 8 + 5] : Zero;
-    mapChunk1(41, 36) = (nextX * 8 + 6 < mapSizeX) ?
-                        gridMap[idxY][nextX * 8 + 6] : Zero;
-    mapChunk1(47, 42) = (nextX * 8 + 7 < mapSizeX) ?
-                        gridMap[idxY][nextX * 8 + 7] : Zero;
+
+    for (int i = 0; i < 8; ++i)
+#pragma HLS UNROLL
+        mapChunk1(i * 6 + 5, i * 6) = (nextX * 8 + i < mapSizeX) ?
+            gridMap[idxY][nextX * 8 + i] : Zero;
 
     /* Get elements `idxX` to `idxX + 7` from the above chunks */
     mapChunk0 >>= (offsetX * 6);
@@ -94,14 +72,9 @@ void GetMapValuesParallelX(
     const MapChunk mapChunk = mapChunk0 | mapChunk1;
 
     /* Store the final elements */
-    mapValues[0] = mapChunk(5, 0);
-    mapValues[1] = mapChunk(11, 6);
-    mapValues[2] = mapChunk(17, 12);
-    mapValues[3] = mapChunk(23, 18);
-    mapValues[4] = mapChunk(29, 24);
-    mapValues[5] = mapChunk(35, 30);
-    mapValues[6] = mapChunk(41, 36);
-    mapValues[7] = mapChunk(47, 42);
+    for (int i = 0; i < 8; ++i)
+#pragma HLS UNROLL
+        mapValues[i] = mapChunk(i * 6 + 5, i * 6);
 }
 
 /* Evaluate the matching score based on the discretized scan points */
