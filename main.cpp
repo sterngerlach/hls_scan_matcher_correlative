@@ -330,19 +330,21 @@ void OptimizePose(
 #pragma HLS LOOP_TRIPCOUNT min=40 max=40 avg=40
 #pragma HLS LOOP_FLATTEN off
             /* Evaluate the score using the coarse grid map */
-            int sumScores[MAP_X / MAP_CHUNK];
-#pragma HLS ARRAY_PARTITION variable=sumScores cyclic factor=8 dim=1
-
-            ComputeScoreOnCoarseMapAllX(
-                coarseGridMap, mapSizeX, mapSizeY,
-                numOfScans, scanPoints, y, sumScores);
+            int sumScores[MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=sumScores complete dim=1
 
             for (int x = 0, i = 0; x < winX; x += MAP_CHUNK, ++i) {
 #pragma HLS LOOP_TRIPCOUNT min=40 max=40 avg=40
+                /* Perform the coarse evaluation */
+                if (i % 8 == 0)
+                    ComputeScoreOnCoarseMapAllX(
+                        coarseGridMap, mapSizeX, mapSizeY,
+                        numOfScans, scanPoints, x, y, sumScores);
+
                 /* Do not evaluate the high-resolution grid map if
                  * the upper-bound score obtained from the low-resolution
                  * coarser grid map is below a current maximum score */
-                if (sumScores[i] <= scoreMax)
+                if (sumScores[i % 8] <= scoreMax)
                     continue;
 
                 /* Evaluate the score using the high-resolution grid map,
