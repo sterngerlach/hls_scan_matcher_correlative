@@ -236,57 +236,43 @@ void ComputeScoreOnCoarseMapAllX(
     const int mapSizeX, const int mapSizeY,
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
-    const int offsetY,
-    int sumScores[MAP_X / MAP_CHUNK])
+    const int offsetX, const int offsetY,
+    int sumScores[MAP_CHUNK])
 {
 #pragma HLS INLINE off
 
     const MapValue Zero = static_cast<MapValue>(0);
 
     /* Parallelize the score computation along the X-axis */
-    MapValue mapValues[MAP_X / MAP_CHUNK];
-#pragma HLS ARRAY_PARTITION variable=mapValues cyclic factor=8 dim=1
+    MapValue mapValues[MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=mapValues complete dim=1
 
     /* Initialize the scores (very important) */
-    for (int j = 0; j < MAP_X / MAP_CHUNK; ++j)
-#pragma HLS UNROLL skip_exit_check factor=8
+    for (int j = 0; j < MAP_CHUNK; ++j)
+#pragma HLS UNROLL
         sumScores[j] = 0;
 
     /* Compute the matching score based on the occupancy probability value */
     for (int i = 0; i < numOfScans; ++i) {
 #pragma HLS LOOP_TRIPCOUNT min=180 max=512 avg=360
 #pragma HLS LOOP_FLATTEN off
+#pragma HLS PIPELINE II=1
         /* Compute the grid cell index */
         const Point2D<int> scanPoint = scanPoints[i];
-        const int hitIdxX = scanPoint.mX;
+        const int hitIdxX = scanPoint.mX + offsetX;
         const int hitIdxY = scanPoint.mY + offsetY;
 
         if (hitIdxY < 0 || hitIdxY >= mapSizeY)
             continue;
 
-        /* Retrieve the occupancy probability values */
+        /* Get the grid map values */
         GetCoarseMapValuesAllX(coarseGridMap, mapSizeX, mapSizeY,
                                hitIdxX, hitIdxY, mapValues);
 
-        /* Consider the actual map width `mapSizeX` which could be less than
-         * the maximum map width `MAP_X` when computing the maximum horizontal
-         * index of the valid grid cell in the coarse grid map `maxX` */
-        const int offsetX = hitIdxX % MAP_CHUNK;
-        const int skipX = hitIdxX / MAP_CHUNK;
-        const int maxX = (mapSizeX / MAP_CHUNK) +
-                         ((offsetX < mapSizeX % MAP_CHUNK) ? 1 : 0);
-
-        /* Parallelize the score computation */
-        for (int j = 0; j < MAP_X / MAP_CHUNK; ++j) {
-#pragma HLS UNROLL skip_exit_check factor=8
-            /* Only the grid cells which are observed at least once and
-             * have known occupancy probability values are considered in the
-             * score computation */
-            /* Append the occupancy probability to the matching score */
-            const MapValue mapValue = (j + skipX < maxX) ?
-                                      mapValues[skipX + j] : Zero;
-            sumScores[j] += static_cast<int>(mapValue);
-        }
+        /* Update the scores */
+        for (int j = 0; j < MAP_CHUNK; ++j)
+#pragma HLS UNROLL
+            sumScores[j] += static_cast<int>(mapValues[j]);
     }
 }
 
