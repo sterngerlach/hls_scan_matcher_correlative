@@ -97,21 +97,22 @@ void ComputeScoreOnMapParallelX(
     const int mapSizeX, const int mapSizeY,
     const int numOfScans,
     const Point2D<int> scanPoints[MAX_NUM_OF_SCANS],
-    const int baseOffsetX, const int offsetY,
-    int& bestSumScore, int& bestX)
+    const int baseOffsetX, const int baseOffsetY,
+    int& bestSumScore, int& bestX, int& bestY)
 {
 #pragma HLS INLINE off
 
-    /* Parallelize the score computation along the X-axis */
-    int sumScores[MAP_CHUNK];
-#pragma HLS ARRAY_PARTITION variable=sumScores complete dim=1
-    MapValue mapValues[MAP_CHUNK];
-#pragma HLS ARRAY_PARTITION variable=mapValues complete dim=1
+    int sumScores[2][MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=sumScores complete dim=0
+    MapValue mapValues[2][MAP_CHUNK];
+#pragma HLS ARRAY_PARTITION variable=mapValues complete dim=0
 
     /* Initialize the scores (very important) */
     for (int j = 0; j < MAP_CHUNK; ++j)
 #pragma HLS UNROLL
-        sumScores[j] = 0;
+        for (int k = 0; k < 2; ++k)
+#pragma HLS UNROLL
+            sumScores[k][j] = 0;
 
     /* Evaluate the matching score based on the occupancy probability value */
     for (int i = 0; i < numOfScans; ++i) {
@@ -121,7 +122,7 @@ void ComputeScoreOnMapParallelX(
         /* Compute the grid cell index */
         const Point2D<int> scanPoint = scanPoints[i];
         const int hitIdxX = scanPoint.mX + baseOffsetX;
-        const int hitIdxY = scanPoint.mY + offsetY;
+        const int hitIdxY = scanPoint.mY + baseOffsetY;
 
         if (hitIdxY < 0 || hitIdxY >= mapSizeY)
             continue;
@@ -132,21 +133,31 @@ void ComputeScoreOnMapParallelX(
 
         /* Parallelize the score computation */
         for (int j = 0; j < MAP_CHUNK; ++j) {
+#pragma HLS UNROLL
             /* Only the grid cells which are observed at least once and
              * have known occupancy probability values are considered in the
              * score computation */
             /* Append the occupancy probability to the matching score */
-            sumScores[j] += static_cast<int>(mapValues[j]);
+            for (int k = 0; k < 2; ++k)
+                sumScores[k][j] += static_cast<int>(mapValues[k][j]);
         }
     }
 
     /* Choose the maximum score and its corresponding number of the known
      * grid cells with valid occupancy probability values */
-    int bestIdx;
-    MaxValueAndIndex8(sumScores, bestSumScore, bestIdx);
+    int bestSumScores[2];
+    int bestIndices[2];
+    MaxValueAndIndex8(sumScores[0], bestSumScores[0], bestIndices[0]);
+    MaxValueAndIndex8(sumScores[1], bestSumScores[1], bestIndices[1]);
 
     /* Return the result */
-    bestX = baseOffsetX + bestIdx;
+    bestSumScore = bestSumScores[0] > bestSumScores[1] ?
+                   bestSumScores[0] : bestSumScores[1];
+    const int bestIdxX = bestSumScores[0] > bestSumScores[1] ?
+                         bestIndices[0] : bestIndices[1];
+    const int bestIdxY = bestSumScores[0] > bestSumScores[1] ? 0 : 1;
+    bestX = baseOffsetX + bestIdxX;
+    bestY = baseOffsetY + bestIdxY;
 }
 
 /* Evaluate the matching score using the high-resolution grid map */
