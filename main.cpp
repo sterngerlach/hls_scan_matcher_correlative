@@ -170,21 +170,22 @@ void EvaluateOnMapParallelX(
     int& scoreMax, int& bestX, int& bestY, int& bestTheta)
 {
     /* Search inside the relatively small area */
-    for (int y = 0; y < MAP_CHUNK; ++y) {
+    for (int y = 0; y < MAP_CHUNK; y += 2) {
         /* Evaluate the score using the high-resolution grid map */
         int offsetX;
-        int sumScore = 0;
+        int offsetY;
+        int sumScore;
         ComputeScoreOnMapParallelX(
             gridMap, mapSizeX, mapSizeY,
             numOfScans, scanPoints, baseOffsetX, baseOffsetY + y,
-            sumScore, offsetX);
+            sumScore, offsetX, offsetY);
 
         /* Update the maximum score and the grid cell index inside
          * the search window */
         if (scoreMax < sumScore) {
             scoreMax = sumScore;
             bestX = offsetX;
-            bestY = baseOffsetY + y;
+            bestY = offsetY;
             bestTheta = offsetTheta;
         }
     }
