@@ -570,6 +570,7 @@ void ScanMatchCorrelative(
 
     /* Grid map and the coarse grid map */
     MapValue gridMap[MAP_Y][MAP_X];
+#pragma HLS ARRAY_PARTITION variable=gridMap cyclic factor=2 dim=1
 #pragma HLS ARRAY_PARTITION variable=gridMap cyclic factor=8 dim=2
 
     /* coarseGridMap[y, .]: (y, 0), (y, 8), ..., (y, 312),
