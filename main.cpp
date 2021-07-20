@@ -39,7 +39,7 @@ void GetMapValuesParallelX(
     const MapValue gridMap[MAP_Y][MAP_X],
     const int mapSizeX, const int mapSizeY,
     const int idxX, const int idxY,
-    MapValue mapValues[MAP_CHUNK])
+    MapValue mapValues[2][MAP_CHUNK])
 {
     const MapValue Zero = static_cast<MapValue>(0);
 
@@ -48,33 +48,47 @@ void GetMapValuesParallelX(
     const int offsetX = idxX & 0x7;
     const int beginX = idxX & ~0x7;
     const int baseX = beginX / MAP_CHUNK;
-
-    /* Get 16 values from `baseX * 8` to `baseX * 8 + 15` */
-    /* Note that `baseX * 8 + offsetX` equals to `idxX` */
-    MapChunk mapChunk0 = 0;
-    MapChunk mapChunk1 = 0;
-
-    for (int i = 0; i < MAP_CHUNK; ++i)
-#pragma HLS UNROLL
-        mapChunk0(i * 6 + 5, i * 6) = (baseX * 8 + i < mapSizeX) ?
-            gridMap[idxY][baseX * 8 + i] : Zero;
-
     const int nextX = baseX + 1;
 
-    for (int i = 0; i < MAP_CHUNK; ++i)
+    /* `i < maxX0` equals to `baseX * 8 + i < mapSizeX` and
+     * `i < maxX1` equals to `nextX * 8 + i < mapSizeX` */
+    const int maxX0 = mapSizeX - baseX * 8;
+    const int maxX1 = mapSizeY - nextX * 8;
+
+    MapChunk mapChunk0[2];
+    MapChunk mapChunk1[2];
+    MapChunk mapChunk[2];
+
+    for (int i = 0; i < MAP_CHUNK; ++i) {
 #pragma HLS UNROLL
-        mapChunk1(i * 6 + 5, i * 6) = (nextX * 8 + i < mapSizeX) ?
+        mapChunk0[0](i * 6 + 5, i * 6) = (i < maxX0) ?
+            gridMap[idxY][baseX * 8 + i] : Zero;
+        mapChunk1[0](i * 6 + 5, i * 6) = (i < maxX1) ?
             gridMap[idxY][nextX * 8 + i] : Zero;
+    }
 
-    /* Select 8 values from `idxX` to `idxX + 7` */
-    mapChunk0 >>= (offsetX * 6);
-    mapChunk1 <<= (48 - offsetX * 6);
-    const MapChunk mapChunk = mapChunk0 | mapChunk1;
 
-    /* Store the final elements */
+    if (idxY + 1 < mapSizeY) {
+        for (int i = 0; i < MAP_CHUNK; ++i) {
+#pragma HLS UNROLL
+            mapChunk0[1](i * 6 + 5, i * 6) = (i < maxX0) ?
+                gridMap[idxY + 1][baseX * 8 + i] : Zero;
+            mapChunk1[1](i * 6 + 5, i * 6) = (i < maxX1) ?
+                gridMap[idxY + 1][nextX * 8 + i] : Zero;
+        }
+    }
+
+    for (int j = 0; j < 2; ++j) {
+#pragma HLS UNROLL
+        mapChunk0[j] >>= (offsetX * 6);
+        mapChunk1[j] <<= (48 - offsetX * 6);
+        mapChunk[j] = mapChunk0[j] | mapChunk1[j];
+    }
+
     for (int i = 0; i < MAP_CHUNK; ++i)
 #pragma HLS UNROLL
-        mapValues[i] = mapChunk(i * 6 + 5, i * 6);
+        for (int j = 0; j < 2; ++j)
+            mapValues[j][i] = mapChunk[j](i * 6 + 5, i * 6);
 }
 
 /* Evaluate the matching score based on the discretized scan points */
